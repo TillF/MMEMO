@@ -4,7 +4,7 @@
 base_dir="./runs2/"
 saveplots=TRUE
 
-rescale_ip_values = FALSE #rescale IP-values so their IQR falls within -1...1
+rescale_ip_values = TRUE #rescale IP-values so their IQR falls within -1...1
 
 
 
@@ -151,7 +151,7 @@ berry_pal = divPal(n = 16, reverse = FALSE, alpha = 1, extr = FALSE, yb = FALSE,
       apply(collected_ip_matrices, MARGIN = 1:2, FUN = IQR, na.rm=TRUE)
   }
   
-  windows(width = length(resolutions)*4, height = length(target_vars)*4.5)
+  windows(width = length(resolutions)*4*1.1, height = length(target_vars)*4.5)
   
   for (enhancement in enhancement_names)
   {  
@@ -160,7 +160,7 @@ berry_pal = divPal(n = 16, reverse = FALSE, alpha = 1, extr = FALSE, yb = FALSE,
     #layout(matrix(1:(length(target_vars)*length(resolutions)), ncol = length(resolutions), byrow=TRUE))
     #layout.show()
     par(mfrow=c(nr=length(target_vars), nc=length(resolutions)), #divide into subplots
-        oma=c(0,0.7,2,0), mar=c(0,1.3,2,0))                                         #set outer margin at top for title   
+        oma=c(0,1,3,0), mar=c(0,1.3,2,0))                                         #set outer margin at top for title   
     
     for (target_var in target_vars) #loop filling rows in layout
     {
@@ -261,7 +261,7 @@ berry_pal = divPal(n = 16, reverse = FALSE, alpha = 1, extr = FALSE, yb = FALSE,
       
     }  
    
-    mtext(text=paste0("ME", which(enhancement==enhancement_names),": ", enhancement), side=3, outer=TRUE, cex=font_size) #write window title
+    mtext(padj = -0.3, text=paste0("ME", which(enhancement==enhancement_names),": ", enhancement), side=3, outer=TRUE, cex=font_size) #write window title
     if (saveplots) 
     {
       enhancement=sub(enhancement,pattern = "/", repl="_")
@@ -273,7 +273,8 @@ berry_pal = divPal(n = 16, reverse = FALSE, alpha = 1, extr = FALSE, yb = FALSE,
 
 
 
-##compute range in improvement values for each enhancement (sigma)
+##compute range in improvement values for each enhancement (ASD)
+  font_size = 2.5
   #relate respective A+ and B- runs
   col_index_ip_values = which(grepl(names(parameterizations), pattern = "^I_P"))
   aux4aggr=sub(x = parameterizations$parameterization_ID, pattern = "B", repl="A")
@@ -305,14 +306,15 @@ berry_pal = divPal(n = 16, reverse = FALSE, alpha = 1, extr = FALSE, yb = FALSE,
     round(res_tab, digits=2 )
     apply(res_tab, MARGIN = 1, mean)      
   
-  windows(width = length(resolutions)*4, height = length(target_vars)*4.5)
+  #windows(width = length(resolutions)*4, height = length(target_vars)*4.5)
+  windows(width = length(resolutions)*4*1.1, height = length(target_vars)*4.5)
   
   for (enhancement in enhancement_names)
   {  
-    
+
     par(mfrow=c(nr=length(target_vars), nc=length(resolutions)), #divide into subplots
-        oma=c(0,0.7,1.3,0), mar=c(0,1.3,1.3,0))                                         #set outer margin at top for title   
-    
+        oma=c(0,1,3,0), mar=c(0,1.3,2,0))                                         #set outer margin at top for title   
+        
     for (target_var in target_vars) #loop filling rows in layout
     {
       for (resolution in resolutions) #loop filling columns in layout
@@ -363,9 +365,9 @@ berry_pal = divPal(n = 16, reverse = FALSE, alpha = 1, extr = FALSE, yb = FALSE,
         
         
         if (target_var==target_vars[1]) #first row in plot
-          mtext(text=paste(resolution, "h"), side=3, outer=FALSE, cex=1.5) #write window title
+          mtext(text=paste(resolution, "h"), side=3, outer=FALSE, cex=font_size) #
         if (resolution==resolutions[1]) #first col in plot
-          mtext(text = ifelse(target_var=="wat","water","sediment"), side=2, outer=FALSE, cex=1.5) #write window title
+          mtext(text = ifelse(target_var=="wat","water","sediment"), side=2, outer=FALSE, cex=font_size) #
         
         if (all(is.na(improvement_matrix))) next    
         
@@ -383,20 +385,22 @@ berry_pal = divPal(n = 16, reverse = FALSE, alpha = 1, extr = FALSE, yb = FALSE,
         max_val = max(improvement_matrix, na.rm=TRUE)  
         max_ix = which(improvement_matrix == max_val, arr.ind=TRUE)
         max_ix  = (max_ix-1) / (dim(improvement_matrix)-1)
-        text(adj = c(0.5,0.5), x=max_ix[1,2], y=1-max_ix[1,1], labels=format(max_val, digits = 2), cex = 2)
+        text(adj = c(0.5,0.5), x=max_ix[1,2], y=1-max_ix[1,1], labels=format(round(max_val, digits=2), digits = 2), cex = font_size)
+        
         
         min_val = 	min(improvement_matrix, na.rm=TRUE)  
         min_ix = which(improvement_matrix == 	min_val, arr.ind=TRUE)
         min_ix  = (	min_ix-1) / (dim(improvement_matrix)-1)
-        text(adj = c(0.5,0.5), x=	min_ix[1,2], y=1-	min_ix[1,1], labels=format(	min_val, digits = 2), cex = 2)
+        text(adj = c(0.5,0.5), x=	min_ix[1,2], y=1-	min_ix[1,1], labels=format(round(min_val, digits=2), digits = 2), cex = font_size)
       }
     }  
-    mtext(text=enhancement, side=3, outer=TRUE, cex=1.5) #write window title
+    
+    mtext(padj = -0.3, text=paste0("ME", which(enhancement==enhancement_names),": ", enhancement), side=3, outer=TRUE, cex=font_size) #write window title
     if (saveplots) 
     {
       enhancement=sub(enhancement,pattern = "/", repl="_")
-      savePlot(file=paste0(base_dir,"plots/ip_range/",enhancement,"_IP_range",".wmf"), type = "wmf" ) #flawed in RStudio
-      savePlot(file=paste0(base_dir,"plots/ip_range/",enhancement,"_IP_range",".png"), type = "png")
+      savePlot(file=paste0(base_dir,"plots/ASD/",enhancement,"_ASD",".wmf"), type = "wmf" ) #flawed in RStudio
+      savePlot(file=paste0(base_dir,"plots/ASD/",enhancement,"_ASD",".png"), type = "png")
     }  
     
   }
@@ -404,7 +408,7 @@ berry_pal = divPal(n = 16, reverse = FALSE, alpha = 1, extr = FALSE, yb = FALSE,
   
 
 
-#analysis
+#further analysis (II)
   enhancements_list = sub(pattern = "..(\\d)*_.*", x = parameterizations$parameterization_ID, repl="\\1")
   p2                = parameterizations[!(enhancements_list %in% c("A","B")),]  #discard reference parametrisations, as there are no improvement values for them
   enhancements_list = enhancements_list[!(enhancements_list %in% c("A","B"))]
