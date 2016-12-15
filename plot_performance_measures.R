@@ -2,7 +2,7 @@
 ## to be run after collect_performance_measures.R
 
 base_dir="./runs2/"
-saveplots=TRUE
+saveplots=FALSE
 
 rescale_ip_values = TRUE #rescale IP-values so their IQR falls within -1...1
 
@@ -290,21 +290,31 @@ berry_pal = divPal(n = 16, reverse = FALSE, alpha = 1, extr = FALSE, yb = FALSE,
   } 
   rel_range_I_P = aggregate(x = parameterizations[, col_index_ip_values], by = list(parameterization_ID=aux4aggr), FUN = rel_range)
  
-  #aggregate by ME and resolution
-    tt=matrix(as.matrix(rel_range_I_P[,-1]), ncol=1)
-    aux4aggr= rep(sub(x = rel_range_I_P$parameterization_ID, pattern = "(.).(\\d)*_._(\\d+)", repl="\\2_\\3"),8)
-    med_rel_range_I_P = aggregate(x = tt, by = list(parameterization_ID=aux4aggr), FUN = median)
-    med_rel_range_I_P$ME =as.numeric(sub(med_rel_range_I_P$parameterization_ID, pattern = "(^\\d).*" , repl="\\1"))
-    med_rel_range_I_P = na.omit(med_rel_range_I_P)
-    med_rel_range_I_P$res=sub(med_rel_range_I_P$parameterization_ID, pattern = "^\\d_(\\d*)" , repl="\\1")
-    me_s=sort(unique(med_rel_range_I_P$ME))
-    res_tab = merge(
-      med_rel_range_I_P[med_rel_range_I_P$res==1 ,],
-      med_rel_range_I_P[med_rel_range_I_P$res==24,],
-      by="ME", all.x = TRUE
-    )[,c("ME","V1.x", "V1.y")]
-    round(res_tab, digits=2 )
-    apply(res_tab, MARGIN = 1, mean)      
+  #aggregate by ME and resolution (Table 5)
+  # tt=matrix(as.matrix(rel_range_I_P[,-1]), ncol=1) #write all IP-values into a single vector
+  # aux4aggr= rep(sub(x = rel_range_I_P$parameterization_ID, pattern = "(.).(\\d)*_._(\\d+)", repl="\\2_\\3"),8) #create aggregation key from IDs
+  # med_rel_range_I_P = aggregate(x = tt, by = list(parameterization_ID=aux4aggr), FUN = median)
+  # med_rel_range_I_P$ME =as.numeric(sub(med_rel_range_I_P$parameterization_ID, pattern = "(^\\d).*" , repl="\\1"))
+  # med_rel_range_I_P = na.omit(med_rel_range_I_P)
+  # med_rel_range_I_P$res=sub(med_rel_range_I_P$parameterization_ID, pattern = "^\\d_(\\d*)" , repl="\\1")
+  # me_s=sort(unique(med_rel_range_I_P$ME))
+  # res_tab = merge(
+  #   med_rel_range_I_P[med_rel_range_I_P$res==1 ,],
+  #   med_rel_range_I_P[med_rel_range_I_P$res==24,],
+  #   by="ME", all.x = TRUE
+  # )[,c("ME","V1.x", "V1.y")]
+  # round(res_tab, digits=2 )
+  
+  tt=matrix(as.matrix(rel_range_I_P[,-1]), ncol=1) #write all IP-values into a single vector
+  aux4aggr= rep(sub(x = rel_range_I_P$parameterization_ID, pattern = "(.).(\\d)*_._(\\d+)", repl="\\2"),8) #create aggregation key from IDs
+  med_rel_range_I_P = aggregate(x = tt, by = list(parameterization_ID=aux4aggr), FUN = median)
+  med_rel_range_I_P$ME =as.numeric(sub(med_rel_range_I_P$parameterization_ID, pattern = "(^\\d).*" , repl="\\1"))
+  med_rel_range_I_P = na.omit(med_rel_range_I_P)
+  med_rel_range_I_P$res=sub(med_rel_range_I_P$parameterization_ID, pattern = "^\\d_(\\d*)" , repl="\\1")
+  round(med_rel_range_I_P, digits=2 )
+  
+  
+    
   
   #windows(width = length(resolutions)*4, height = length(target_vars)*4.5)
   windows(width = length(resolutions)*4*1.1, height = length(target_vars)*4.5)
