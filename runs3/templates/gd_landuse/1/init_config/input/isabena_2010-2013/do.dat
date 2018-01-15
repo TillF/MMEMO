@@ -1,0 +1,37 @@
+v1.33 v1.32 Parameter specification for the WASA Model (SESAM-Project), generated with make_wasa_input.php
+../../input/isabena_2010-2013/
+../../output/isabena_2010-2013/ 
+2011  //tstart (start year of simulation)
+2016  //tstop (end year of simulation)
+1     //mstart (start month of simulation)			
+4     //mstop (end month of simulation) 
+7	//no. of sub-basins
+537	//no. of combinations of sub-basins, landscape units, terrain components (TC-instances)
+64	//total no. of Landscape units in study area
+506	//total no. of terrain components (types) in study area
+22	//total no. of soil components in study area
+10	//total no. of vegetation units in study area
+.f.	  //doreservoir: do reservoir calculations
+.f.   //doacudes:includes dam calculations
+.t.   //dolattc: do latflow between TCs
+.f.   //doalllattc: rout latflow compeletely to next downslope TC
+.t.   //dolatsc: do latflow within TCs (surface runoff)
+.t.   //dolatscsub: do latflow within TCs (subsurface runoff)
+.f.   //dotrans: do water transpositions betwen sub-basins
+.t.   //dohour: do hourly version
+0     //scenario: choose scenario (0:less rain (ECHAM), 1:no trend, 2:more rain (Hadley))
+0     //krig: type of precipitation interpolation (0:OK, 1:EDK, 2:EDKxyz, 3:csimabsed3, 4:csimreled3, 5:csimreled1, 6:csimabsed1, 7:statdata, 8:statdatacon, 9:gerstdatacon, 10:gerstdata, 11:ok_mean1cell)
+1	4.247339	0  //kfkorr:  hydraulic conductivity factor (for daily model version) (kfkorr)
+0.30  //intcf: interception capacity per unit LAI (mm)
+0     //dointc: type of interception routine (simple bucket:0, modified bucket:1)
+.t.   //doscale: do scaling due to rainfall interpolation ?
+.f.   //domuncell: for muni/ezg-nocell-version, use rainfall input derived from cells ? (change kf_calib.dat !)
+1.    //sensfactor: factor for sensitivity studies
+1	  //dt: time step in [hours]
+.f.   //dosediment
+3	  //No. of grain size classes
+1	  // type of sediment transport model at the hillslope	
+2     // type of sediment transport model in the river (1) old WASA routing, (2) Muskingum
+1     //type of sediment model in the reservoir: choose sediment transport equation (1:Wu et al., 2000; 2:Ashida and Michiue, 1973; 3: Yang, 1973 and 1984; 4: Ackers and White, 1973)
+.t. //load state of storages from files (if present) at start (optional)
+.t. //save state of storages to files after simulation period (optional)

@@ -1,0 +1,13 @@
+#!/bin/bash
+#PBS -M francke@uni-potsdam.de
+#PBS -N xconfig_id
+#PBS -m ae
+#PBS -j oe
+#PBS -l ncpus=16
+#PBS -l nodes=1:ppn=16:stable
+#PBS -l walltime=575:00:00
+#PBS -l mem=4gb
+cd $PBS_O_WORKDIR
+module load openmpi-x86_64
+chmod a+x wasa.lin
+/usr/lib64/openmpi/bin/mpirun --mca btl self,sm -np 16 R --slave -f calibrate_main_dds_mpi.R > joblog-mpi.txt

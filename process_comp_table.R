@@ -1,13 +1,13 @@
 #process the comparison table and determine the respective metrics
 
-base_dir="./runs2/"
+base_dir="./runs3/"
 
 
-configs_dirs=read.table(file="configuration.txt", sep="\t", header=FALSE, skip=2, nrows=1) #read configurations directories
-configs       =read.table(file="configuration.txt", sep="\t", header=TRUE, skip=1, stringsAsFactors=FALSE) #read configurations
+configs_dirs=read.table(file=paste0(base_dir,"configuration.txt"), sep="\t", header=FALSE, skip=2, nrows=1) #read configurations directories
+configs       =read.table(file=paste0(base_dir,"configuration.txt"), sep="\t", header=TRUE, skip=1, stringsAsFactors=FALSE) #read configurations
 
-parameterizations_header = read.table(file="parameterizations.txt", sep="\t", header=FALSE, nrows=3) #read parameterizations.txt
-parameterizations=read.table(file="parameterizations.txt", sep="\t", header=TRUE, skip=3, stringsAsFactors=FALSE) #read parameterizations.txt
+parameterizations_header = read.table(file=paste0(base_dir,"parameterizations.txt"), sep="\t", header=FALSE, nrows=3) #read parameterizations.txt
+parameterizations=read.table(file=paste0(base_dir,"parameterizations.txt"), sep="\t", header=TRUE, skip=3, stringsAsFactors=FALSE) #read parameterizations.txt
 
 assemble_config= function(parameterization_id)
 #assemble all necessary files according to info in "configs" into a directory residing in base_dir
@@ -143,10 +143,7 @@ treat_parameterization = function(parameterization_id){
   print("Don't forget to convert linebreaks of job_parallel.pbs manually!")
 }
 
-
-#finished
-
-# #running
+#select a single param
 # parameterization_id="A_u_24" 
 parameterization_id="A+1_u_24"
 # 
@@ -201,12 +198,12 @@ parameterization_id="A+1_u_24"
 
 
 #treat_parameterization(parameterization_id)
-params2gen = parameterizations$parameterization_ID
-params2gen = params2gen[!grepl(pattern = "_c", params2gen)] #only use "_u_"
+params2gen = parameterizations$parameterization_ID #do all
+#params2gen = params2gen[!grepl(pattern = "_c", params2gen)] #only use "_u_"
 #params2gen = params2gen[grepl(pattern = "B", params2gen)] #all B
 #params2gen = params2gen[grepl(pattern = "_1", params2gen)] # all 1
-params2gen = params2gen[grepl(pattern = "B", params2gen)] #all B
-params2gen = params2gen[!grepl(pattern = "7", params2gen)] #not 7
+#params2gen = params2gen[grepl(pattern = "B", params2gen)] #all B
+#params2gen = params2gen[!grepl(pattern = "7", params2gen)] #not 7
 
 
 sapply(X=params2gen, treat_parameterization) #do all runs

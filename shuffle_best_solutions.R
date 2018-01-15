@@ -4,7 +4,7 @@
 resolution="1" #choose resultion (only respective parameterizations are scanned)
 config="B"
 n_best = 15 #number of best paramsets to retrieve overall
-base_dir="./runs2/"
+base_dir="./runs3/"
 sed=TRUE
 
 param_dirs = dir(path=base_dir, pattern=paste0("^",config, ".*_",resolution,"$" ))
@@ -33,9 +33,9 @@ collected = unique(collected) #remove duplicates
 collected = collected[sort.int(collected$objective_function, index.return=TRUE)$ix,] #sort by performance
 collected = collected [1:min(c(n_best, nrow(collected))),] #limit selection to desired number of parameter sets
 
-write.table(file=paste0("init_estimates",config, "_",resolution,ifelse(sed,"_sed",""),"_full" ,".txt"), collected[, ], sep="\t", quote=FALSE, row.names=FALSE)
+write.table(file=paste0(base_dir,"/init_estimates_after_prerun/init_estimates",config, "_",resolution,ifelse(sed,"_sed",""),"_full" ,".txt"), collected[, ], sep="\t", quote=FALSE, row.names=FALSE)
 
-write.table(file=paste0("init_estimates",config, "_",resolution ,ifelse(sed,"_sed",""),".txt"), collected[, !(names(collected) %in% c("time","objective_function", "worker","param_dir"))], sep="\t", quote=FALSE, row.names=FALSE)
+write.table(file=paste0(base_dir,"/init_estimates_after_prerun/init_estimates",config, "_",resolution ,ifelse(sed,"_sed",""),".txt"), collected[, !(names(collected) %in% c("time","objective_function", "worker","param_dir"))], sep="\t", quote=FALSE, row.names=FALSE)
 
 
 

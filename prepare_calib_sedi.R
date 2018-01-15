@@ -3,10 +3,10 @@
 # use existing directory "thread1_best" (created by view_progress.R)
 
 # run on cluster or
-# when called locally before copying to cluster: delete files in main directory
+# when called locally before copying to cluster: delete dds.* and thread.* in run directories
 
 
-setwd("E:/till/uni/parameterisierung/Esera_2014/runs2")
+setwd("E:/till/uni/parameterisierung/Esera_2014/runs3")
 
 param_ids=c(
 #  "A_u_24",
@@ -15,30 +15,30 @@ param_ids=c(
 #  "A+3_u_24",
 #  "A+4_u_24",
 #  "A+5_u_24",
-# #"A+6_u_24",
-# "A+7_u_24",
+# "A+6_u_24",
+#"A+7_u_24"
 
 #"A_u_1",
-# "A+1_u_1",
-#   "A+2_u_1"
-#    "A+3_u_1",
+#"A+1_u_1",
+#   "A+2_u_1",
+#    "A+3_u_1"
 #    "A+4_u_1",
 #    "A+5_u_1",
-#  "A+7_u_1",
-#  "B_u_24",
-#    "B-1_u_24"
-#    "B-2_u_24"
-#    "B-3_u_24",
-#    "B-4_u_24",
-#    "B-5_u_24",
-#    "B-7_u_24"
-#  "B_u_1"
-  "B-1_u_1"
-#  "B-2_u_1",
-#  "B-3_u_1"
-#  "B-4_u_1",
-#  "B-5_u_1"
-#  "B-7_u_1"
+#  "A+7_u_1"
+ # "B_u_24",
+ #   "B-1_u_24",
+ #   "B-2_u_24",
+ #   "B-3_u_24",
+ #   "B-4_u_24",
+ #   "B-5_u_24",
+ #   "B-7_u_24"
+  # "B_u_1",
+  # "B-1_u_1",  
+  # "B-2_u_1",
+  "B-3_u_1"
+#   "B-4_u_1",
+#   "B-5_u_1",
+#   "B-7_u_1"
 )
 
 
