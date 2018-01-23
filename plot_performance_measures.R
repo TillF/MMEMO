@@ -951,6 +951,43 @@ load(paste0(base_dir, "repl/IP_precision.RData")) #load precision data (IP_preci
     }  
     
   }
+  
+#colour bar
+  windows(width = 2, height = 6)
+  par(  oma=c(0,0.7,1.3,0), mar=c(1,0,1.3,0))       
+  font_size = 3
+  
+  image(col = asd_pal, z = arev(t(cbind(seq(from=3, to=0, length.out = 15), NA)),c(FALSE, TRUE)), axes=FALSE)
+  mtext(side = 3, outer = FALSE, adj = 0., padj=0, text="ASD", cex = font_size)
+  
+  
+  y = 0.0+c(1, 0.66, 0.33, 0.03)
+  x= rep(-0.4, length(y))
+  
+  x= rep(0.8, length(y))
+  
+  shadowtext <- function(x, y=NULL, labels, col='white', bg='black', #create text with halo / shadow
+                         theta= seq(pi/4, 2*pi, length.out=8), r=0.1, ... ) {
+    xy <- xy.coords(x,y)
+    xo <- r*strwidth('A')
+    yo <- r*strheight('A')
+    for (i in theta) {
+      
+      text( xy$x + cos(i)*xo, xy$y + sin(i)*yo, 
+            
+            labels, col=bg, ... )
+      
+    }
+    text(xy$x, xy$y, labels, col=col, ... )
+  }
+  
+  #shadowtext(adj = c(0,0.5), y = y, x=x, labels=c("3", "2", "1", "0"), cex = font_size, font=3, col = "black", bg = "#ffffff")
+  text(adj = c(0,0.5), y = y, x=x, labels=c("3", "2", "1", "0"), cex = font_size, font=3, col = "black", bg = "#ffffff")
+  
+  if (saveplots) savePlot(filename = paste0(base_dir,"plots/ASD/legend_colorbar.wmf"), type = "wmf")
+  if (saveplots) savePlot(filename = paste0(base_dir,"plots/ASD/legend_colorbar.png"), type = "png")
+  
+  
 }  
   
 
