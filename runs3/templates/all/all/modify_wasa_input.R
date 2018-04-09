@@ -1,24 +1,7 @@
 # modify specified parameter in WASA input files
 
-#Till, 15.12.2009
-# corrected bug river params (only Muskingum_K and Q_Spring were affected)
+#9.4.2018
 
-#Till, 13.11.2009
-# added river params
-
-#Till, 18.6.2009
-# corrected case of input dirs
-
-#Till, 2.4.2009
-# modify calibration.dat (parameter ksat_factor)
-
-# Till, 19.8.2008
-# create files from template, also if not listed in "parameters" - overwrites possible older modifications of input files
-
-# Till, 5.6.2008
-#included kfcorr0 and kfcorr_a
-
-# Till, 23.4.2008
 
 modify_wasa_input=function(wasa_input_dir,parameters)
 {
@@ -48,10 +31,10 @@ modify_wasa_input=function(wasa_input_dir,parameters)
   
   
   no_params=NCOL(parameters)
-  while(no_params>0)
+  while(length(parameters)>0)
   {
-##############################################
-    if (names(parameters)[1] %in% c("Manning_n_f","Manning_n"))        #parameters in svc.dat
+#parameters in svc.dat ####
+    if (names(parameters)[1] %in% c("Manning_n_f","Manning_n"))        
         {
       # multiply manning_n in svc.dat by factor
       
@@ -88,8 +71,8 @@ modify_wasa_input=function(wasa_input_dir,parameters)
             next
         }
 
-##############################################
-    if (names(parameters)[1] %in% c("erosion_equation","ri_05_coeffs_a_f","ri_05_coeffs_b_f","transport_limit_mode","transp_cap_a", "transp_cap_b"))        #parameters in erosion.ctl
+#parameters in erosion.ctl ####
+    if (names(parameters)[1] %in% c("erosion_equation","ri_05_coeffs_a_f","ri_05_coeffs_b_f","transport_limit_mode","transp_cap_a", "transp_cap_b"))        
         {
           target_file=paste(wasa_input_dir,"erosion",sep="") #file that holds the parameters to be changed
             
@@ -190,9 +173,8 @@ modify_wasa_input=function(wasa_input_dir,parameters)
             next
         }
 
-
-##############################################  
-    if (names(parameters)[1] %in% c("gw_delay_f","soildepth_f","kf_bedrock_f","riverdepth_f"))        #parameters in soter.dat
+#parameters in soter.dat ####
+    if (names(parameters)[1] %in% c("gw_delay_f","soildepth_f","kf_bedrock_f","riverdepth_f"))        
     {
       # multiply ground water delay by specified factor in soter.dat
       # multiply soil depth by specified factor in soter.dat
@@ -274,7 +256,8 @@ modify_wasa_input=function(wasa_input_dir,parameters)
       next
     }
     
-    if (names(parameters)[1] %in% c("kfcorr","kfcorr0","kfcorr_a", "dosediment"))                #params in do.dat
+#params in do.dat ####
+    if (names(parameters)[1] %in% c("kfcorr","kfcorr0","kfcorr_a", "intcf", "dosediment"))                
     {
       # adjust kfcorr in do.dat
       target_file=paste(wasa_input_dir,"do",sep="") #file that hold the parameters to be changed
@@ -310,6 +293,12 @@ modify_wasa_input=function(wasa_input_dir,parameters)
         no_params=no_params-1
       }
       
+      nn= which(names(parameters)=="intcf")
+      if (length(nn)>0) {
+        file_content[25,1]=paste(round(parameters[nn], 2)," //intcf: interception capacity per unit LAI (mm)",sep="")
+        parameters <- parameters[-nn]
+      }
+      
       nn= which(names(parameters)=="dosediment")
       if (length(nn)>0) #modify dosediment
       {
@@ -326,7 +315,9 @@ modify_wasa_input=function(wasa_input_dir,parameters)
       no_params=no_params-1
       next
     }
-    if (names(parameters)[1] %in% c("f_gw_direct"))                                    #params in frac_direct_gw.dat
+    
+#params in frac_direct_gw.dat    ####
+    if (names(parameters)[1] %in% c("f_gw_direct"))                                    
     {
       # adjust frac_direct_gw in frac_direct_gw.dat
       target_file=paste(wasa_input_dir,"frac_direct_gw",sep="") #file that hold the parameters to be changed
@@ -346,7 +337,8 @@ modify_wasa_input=function(wasa_input_dir,parameters)
       next
     } 
     
-    if (names(parameters)[1] %in% c("kf_scale_f"))                             #params in  scaling_factor.dat
+#params in  scaling_factor.dat ####
+    if (names(parameters)[1] %in% c("kf_scale_f"))                             
     {
       # adjust scaling factors for kf in scaling_factors.dat
       target_file=paste(wasa_input_dir,"Others/scaling_factor",sep="") #file that hold the parameters to be changed
@@ -369,7 +361,8 @@ modify_wasa_input=function(wasa_input_dir,parameters)
       next
     } 
     
-    if (names(parameters)[1] %in% c("ksat_factor"))                            #params in calibration.dat
+#params in calibration.dat ####
+    if (names(parameters)[1] %in% c("ksat_factor"))                            
     {
       # adjust ksat calibration factors in calibration.dat
       target_file=paste(wasa_input_dir,"Others/calibration",sep="") #file that holds the parameters to be changed
@@ -391,7 +384,149 @@ modify_wasa_input=function(wasa_input_dir,parameters)
       no_params=no_params-1
 	  next
     } 
+
+#params in vegetation.dat ####
+    if (any(names(parameters)) %in% c("stomr_f", "rootd_f", "albedo_f")) {
+        # file that hold the parameters to be changed
+        target_file <- paste(dir_run,"Hillslope/vegetation.dat",sep="/")
+        # read data
+        file_content <- read.table(target_file, skip=2, header = FALSE, sep = "\t", dec = ".", fill = TRUE)
+        if (all(!is.finite(file_content[,ncol(file_content)]))) file_content[,ncol(file_content)]=NULL  #discard last column if empty
+        # multiply stomatal resistance in vegetation.dat by factor
+        nn= which(names(parameters)=="stomr_f")
+        if (length(nn)>0) {
+          file_content[,2]=file_content[,2]*parameters[nn]
+          parameters <- parameters[-nn]
+        }
+        # multiply rootdepth in vegetation.dat by factor (all 4 values)
+        nn= which(names(parameters)=="rootd_f")
+        if (length(nn)>0) {
+          file_content[,c(9:12)]=file_content[,c(9:12)]*parameters[nn]
+          parameters <- parameters[-nn]
+        }
+        # multiply albedo in vegetation.dat by factor (all 4 values)
+        nn= which(names(parameters)=="albedo_f")
+        if (length(nn)>0) {
+          file_content[,c(17:20)]=pmin(1,file_content[,c(17:20)]*parameters[nn])
+          parameters <- parameters[-nn]
+        }
+        #re-write file
+        content=paste("Specification of vegetation parameters\nVeg-ID	Stomata_Resistance[s/m]	minsuction[hPa]	maxsuction[hPa]	height1[m]	height2[m]	height3[m]	height4[m]	rootdepth1[m]	rootdepth2[m]	rootdepth3[m]	rootdepth4[m]	LAI1[-]	LAI2[-]	LAI3[-]	LAI4[-]	albedo1[-]	albedo2[-]	albedo3[-]	albedo4[-]",sep = "")
+        write(content, file = target_file)     #write header
+        write.table(round(file_content, 3), file = target_file, append = TRUE, quote = F,row.names=F,col.names=F,sep="\t", na = "")
+        next
+      }
+      
+#params in soil.dat ####
+    if (any(names(parameters) %in% c("n_f", "cfr"))) {
+      # file that hold the parameters to be changed
+      target_file=paste(dir_run,"Hillslope/soil.dat",sep="/")
+      # read data
+      file_content = read.table(target_file, skip=2,header = FALSE, sep = "\t", dec = ".", fill = TRUE)
+      if (all(!is.finite(file_content[,ncol(file_content)]))) file_content[,ncol(file_content)]=NULL  #discard last column if empty
+      
+      # multiply porosity in soil.dat by factor (equally for every horizon and soil)
+      nn= which(names(parameters)=="n_f")
+      if (length(nn)>0) {
+        # iterate over soils (lines in data)
+        for (s in 1:nrow(file_content)) {
+          # get number of horizons
+          nhor = file_content[s,2]
+          # update parameter
+          file_content[s,12+(1:nhor-1)*13] = pmin(1,file_content[s,12+(1:nhor-1)*13]*parameters[nn])
+        }
+        parameters <- parameters[-nn]
+      }
+      # add 'cfr' to coarse fragments in soil.dat (additive!, equally for every horizon and soil)
+      nn= which(names(parameters)=="cfr")
+      if (length(nn)>0) {
+        # iterate over soils (lines in data)
+        for (s in 1:nrow(file_content)) {
+          # get number of horizons
+          nhor = file_content[s,2]
+          # update parameter
+          file_content[s,14+(1:nhor-1)*13] = pmin(1,pmax(0,file_content[s,14+(1:nhor-1)*13]+parameters[nn]))
+        }
+        parameters <- parameters[-nn]
+      }
+      #re-write file
+      content=paste("Specification of soil parameters\nSoil-ID[-]	number(horizons)[-]	(n_res[Vol-]	n_PWP[-]	n_FK2.6[-]	n_FK1.8[-]	n_nFK[-]	n_saturated[-]	n_thickness[mm]	n_ks[mm/d]	n_suction[mm]	n_pore-size-index[-]	n_bubblepressure[cm]	n_coarse_frag[-]*n	n_shrinks[0/1])	bedrock[0/1]	alluvial[0/1]",sep = "")
+      write(content, file = target_file)     #write header
+      write.table(round(file_content,4), file = target_file, append = TRUE, quote = F,row.names=F,col.names=F,sep="\t", na = "")
+      next
+    }
+
+#params in lake.dat / lake_maxvol.dat ####
+    if (any(names(parameters) %in% c("f_lakemaxvol"))) {
+      nn= which(names(parameters)=="f_lakemaxvol")
+      # file that holds the parameters to be changed
+      target_file=paste(dir_run,"Reservoir/lake_maxvol.dat",sep="/")
+      if(file.exists(target_file)) {
+        # read data
+        file_content = read.table(target_file, header = FALSE, sep = "\t", skip=2)
+        # update parameters
+        file_content[,2:ncol(file_content)] <- file_content[,2:ncol(file_content)] * parameters[nn]
+        # write updated parameters
+        write(c("Specification of water storage capacity for the reservoir size classes",
+                "Sub-basin-ID, maxlake[m**3] (five reservoir size classes)"),
+              file = target_file, sep="\n")
+        write.table(round(file_content, 2), target_file, append = T, row.names=F, col.names=F, quote=F, sep="\t")
+      }
+      # file that holds the parameters to be changed
+      target_file=paste(dir_run,"Reservoir/lake.dat",sep="/")
+      if(file.exists(target_file)) {
+        # read data
+        file_content = read.table(target_file, header = FALSE, sep = "\t", skip=2)
+        # update parameters
+        file_content[,2] <- file_content[,2] * parameters[nn]
+        # write updated parameters
+        write(c("Specification of parameters for the reservoir size classes",
+                "Reservoir_class-ID, maxlake0[m**3], lake_vol0_factor[-], lake_change[-], alpha_Molle[-], damk_Molle[-], damc_hrr[-], damd_hrr[-]"),
+              file = target_file, sep="\n")
+        write.table(round(file_content, 2), target_file, append = T, row.names=F, col.names=F, quote=F, sep="\t")
+      }
+      parameters <- parameters[-nn]
+      next
+    }
+
+#params in calib_wind.dat ####
+    if (any(names(parameters) %in% c("f_wind"))) {
+      # file that holds the parameters to be changed
+      target_file=paste(dir_run,"Others/calib_wind.dat",sep="/")
+      # read data
+      file_content = read.table(target_file, header = FALSE, sep = "\t")
+      nn= which(names(parameters)=="f_wind")
+      if (length(nn)>0) {
+        file_content=parameters[nn]
+        parameters <- parameters[-nn]
+      }
+      write.table(round(file_content,3), file = target_file, quote = F,row.names=F,col.names=F,sep="\t")
+      next
+    }
+
+#params in response.dat ####
+    if (any(names(parameters) %in% c("uhg_f"))){
+      # file that hold the parameters to be changed
+      target_file=paste(dir_run,"River/response.dat",sep="/")
+      # read data
+      file_content = read.table(target_file, skip=2,header = FALSE, sep = "\t", dec = ".", fill = TRUE)
+      if (all(!is.finite(file_content[,ncol(file_content)]))) file_content[,ncol(file_content)]=NULL  #discard last column if empty
+      # multiply lag and response times in response.dat by factor
+      nn= which(names(parameters)=="uhg_f")
+      if (length(nn)>0) {
+        file_content[,2:3] <- file_content[,2:3]*parameters[nn]
+        parameters <- parameters[-nn]
+      }
+      #re-write file
+      content=paste("Specification of routing parameter\nSubbasin-ID	lag time [d]	retention [d]",sep = "")
+      write(content, file = target_file)     #write header
+      write.table(round(file_content,2), file = target_file, append = TRUE, quote = F,row.names=F,col.names=F,sep="\t", na = "")
+      next
+    }
     
+    
+    
+#params in river.dat ####    
     river_param_names=c("riv_depth", "riv_width", "riv_side_ratio", "riv_bottom_width_of_floodplain", "riv_side_ratio_floodplains", "riv_channel_slope", "riv_length", "riv_manningn", "riv_manningn_floodplain", "riv_Ksat", "riv_erodibilityfactor", "riv_coverfactor", "riv_riverbedrock", "riv_baseflowalphafactor", "riv_Muskingum_X", "riv_Muskingum_K", "riv_Q_spring")
     if (      sub(names(parameters)[1],pattern ="_f$*", repl="") %in% river_param_names ) 
     {
@@ -421,7 +556,65 @@ modify_wasa_input=function(wasa_input_dir,parameters)
       write(file_header, file = paste(target_file,".dat",sep=""))     #write header
       write.table(file_content, file = paste(target_file,".dat",sep=""), append = TRUE, quote = F,row.names=F,col.names=F,sep="\t")
       next
-    } else
+    } 
+    
+#params in snow_params.ctl ####
+    if(names(parameters)[1] %in% c("tempAir_crit", "weightAirTemp","specCapRet","emissivitySnowMin","a0"))
+    {
+      target_file=paste(wasa_input_dir,"Hillslope/snow_params",sep="") #file holding parameters to be changed
+      
+      if (!file.exists(paste(target_file,".calib_bak",sep="")))   #create backup if not existing
+        file.copy(paste(target_file,".ctl",sep=""),paste(target_file,".calib_bak",sep=""))
+      
+      if (!file.exists(paste(target_file,".calib_bak",sep=""))) 
+        stop(paste(target_file,".calib_bak or .ctl not found.",sep=""))
+      
+      #Modify selected parameters snow routine
+      file_content = read.table(paste(target_file,".calib_bak",sep=""), skip=1,row.names=NULL, header = FALSE, sep = "\t", dec = ".")
+      file_content[,2] <- as.character(file_content[,2])
+      
+      if( "tempAir_crit" %in% names(parameters) ){
+        file_content[which(grepl(pattern = "tempAir", x=file_content[,1])),2] = parameters[which(names(parameters) == "tempAir_crit")]
+        parameters=parameters[-which(names(parameters) == "tempAir_crit")] #remove paramerters from list
+      }
+      
+      if( "weightAirTemp" %in% names(parameters) ){
+        file_content[which(grepl(pattern = "weight", x=file_content[,1])),2] = parameters[which(names(parameters) == "weightAirTemp")]
+        parameters=parameters[-which(names(parameters) == "weightAirTemp")] #remove paramerters from list
+      }
+      
+      if( "specCapRet" %in% names(parameters) ){
+        file_content[which(grepl(pattern = "spec", x=file_content[,1])),2] = parameters[which(names(parameters) == "specCapRet")]
+        parameters=parameters[-which(names(parameters) == "specCapRet")] #remove paramerters from list
+      }
+      
+      if( "emissivitySnowMax" %in% names(parameters) ){
+        file_content[which(grepl(pattern = "emissivitySnowMax", x=file_content[,1])),2] = parameters[which(names(parameters) == "emissivitySnowMax")]
+        parameters=parameters[-which(names(parameters) == "emissivitySnowMax")] #remove paramerters from list
+      }
+      
+      if( "emissivitySnowMin" %in% names(parameters) ){
+        file_content[which(grepl(pattern = "emissivitySnowMin", x=file_content[,1])),2] = parameters[which(names(parameters) == "emissivitySnowMin")]
+        parameters=parameters[-which(names(parameters) == "emissivitySnowMin")] #remove paramerters from list
+      }
+      
+      if( "a0" %in% names(parameters) ){
+        file_content[which(grepl(pattern = "a0", x=file_content[,1])),2] = parameters[which(names(parameters) == "a0")]
+        parameters=parameters[-which(names(parameters) == "a0")] #remove paramerters from list
+      }
+      
+      if( "a1" %in% names(parameters) ){
+        file_content[which(grepl(pattern = "a1", x=file_content[,1])),2] = parameters[which(names(parameters) == "a1")]
+        parameters=parameters[-which(names(parameters) == "a1")] #remove paramerters from list
+      }
+      
+      content=paste("#WASA-control file for snow routines;",sep="\t")
+      write(content, file = paste(target_file,".ctl",sep=""))     #write header
+      write.table(file_content, file = paste(target_file,".ctl",sep=""), append = TRUE, quote = F,row.names=F,col.names=F,sep="\t")
+      no_params=NCOL(parameters)
+      next
+    }
+    else
     {
       stop(paste("Unknown parameter",names(parameters)[1]))
       parameters=parameters[-1] #remove this parameter from list
