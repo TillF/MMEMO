@@ -2,14 +2,16 @@
 
 
 
-read_observations=function(subbas_id, datevec, target_component="River_Flow", wasa_input_dir)
+read_observations=function(subbas_id, datevec, target_component="River_Flow", wasa_input_dir, gauges_info_file=NULL)
 #target_component: c("River_Flow","rain", "River_Sediment_total")
   {
   obs_data=data.frame(datenum=datevec)
   units="date" #collect units for each column
   sub_names="" #collect subbasin names, if present
   
-  gauges_info_file = paste(wasa_input_dir,"/","gauges_catchment_area.txt",sep="")  #for loading gauge catchment sizes
+  if (is.null(gauges_info_file))
+    gauges_info_file = paste(wasa_input_dir,"/","gauges_catchment_area.txt",sep="")  #for loading gauge catchment sizes
+
   if (file.exists(gauges_info_file))
   {  
     gauges_info = read.table(file= gauges_info_file,header=TRUE, sep="\t", stringsAsFactors = FALSE)  # read catchment sizes and subbasin IDs
@@ -24,14 +26,20 @@ read_observations=function(subbas_id, datevec, target_component="River_Flow", wa
   } else  
   subbasin_names = subbas_id #if no name file found, just use the plain numbers
     
-  if ("River_Flow" %in% target_component) # load observed sediment concentrations
+  if (is.numeric(datevec))
+    t_res = datevec else
+    if (as.numeric(difftime(datevec[2],datevec[1],units="hours"))==24) t_res=24*3600 else  #daily data requested
+        t_res=24*3600
+  
+  
+  if ("River_Flow" %in% target_component) # load observed discharge
   {
 
-    if (as.numeric(difftime(datevec[2],datevec[1],units="hours"))==24) obsfile="discharge_obs_24.txt" else  #daily data requested
+    if (t_res==24*3600) obsfile="discharge_obs_24.txt" else  #daily data requested
       obsfile="discharge_obs_1.txt"
     
     #col_names = read.table(paste(wasa_input_dir,"/Time_series/",obsfile,sep=""), header = FALSE, sep = "\t", dec = ".", na.strings = c("-9999.00","-9999","NA","NaN"), skip=4, nrows = 1, stringsAsFactors = FALSE)
-    datain    = read.table(paste(wasa_input_dir,"/Time_series/",obsfile,sep=""), header = TRUE,  sep = "\t", dec = ".", na.strings = c("-9999.00","-9999","NA","NaN"), skip=4)
+    datain    = read.table(paste(wasa_input_dir,"/Time_series/",obsfile,sep=""), header = TRUE,  check.names = FALSE, sep = "\t", dec = ".", na.strings = c("-9999.00","-9999","NA","NaN"), skip=4)
     datain$datenum=as.POSIXct(ISOdate(datain$YYYY, datain$MM, datain$DD, datain$HH, min = 0, sec = 0, tz = "GMT"), tz = "GMT")
     if (any(is.null(datain$datenum))) stop(paste0("Date conversion problem in ",obsfile))
     datain$YYYY=NULL
@@ -44,7 +52,10 @@ read_observations=function(subbas_id, datevec, target_component="River_Flow", wa
     #obs_data=merge(obs_data,datain[,names(datain) %in% c(column_name,"datenum")],by="datenum",all.x=TRUE)
     subbasin_names = intersect(subbasin_names, names(datain))
     if(length(subbasin_names)==0) stop("no observation data for requested subbasins found.")
+    if (is.null(obs_data$datenum))
+    obs_data = datain[, c("datenum", subbasin_names)] else
     obs_data  = merge(obs_data,datain[, c("datenum", subbasin_names)], by="datenum", all.x=TRUE)
+    if (all(is.na(obs_data[,-1]))) warning("no observations for riverflow found in specified time period")
     names(obs_data)[-1] = paste0("sub",subbas_id)
     sub_names = c(sub_names, subbasin_names)
     units = c(units, rep("m3/s", length(subbas_id))) #collect units for each column
@@ -52,7 +63,7 @@ read_observations=function(subbas_id, datevec, target_component="River_Flow", wa
   
   if ("rain" %in% target_component) # load observed rainfall
   {
-    if (as.numeric(difftime(datevec[2],datevec[1],units="hours"))==24) obsfile="rain_daily.dat" else  #daily data requested
+    if (t_res==24*3600) obsfile="rain_daily.dat" else  #daily data requested
       obsfile="rain_hourly.dat"
     
     datain = read.table(paste(wasa_input_dir,"/Time_series/",obsfile,sep=""), header = TRUE, sep = "\t", dec = ".", na.strings = c("-9999.00","-9999","NA","NaN"), skip=2)
@@ -68,7 +79,9 @@ read_observations=function(subbas_id, datevec, target_component="River_Flow", wa
     target_cols[ncol(datain)]=TRUE #datenum (last column) is needed anyway
     
     names(datain) = sub(pattern="^X", replacement="rain_", x=names(datain))
-    obs_data=merge(obs_data, datain[, target_cols],by="datenum",all.x=TRUE)
+    if (is.null(obs_data$datenum))
+      obs_data = datain[, target_cols] else
+      obs_data = merge(obs_data, datain[, target_cols],by="datenum",all.x=TRUE)
     sub_names = c(sub_names, subbasin_names)
     units = c(units, rep("mm", sum(target_cols))) #collect units for each column
     
@@ -123,6 +136,7 @@ read_observations=function(subbas_id, datevec, target_component="River_Flow", wa
       }
       
       monthly_yield_file=paste(wasa_input_dir,"/Time_series/","collected_yields.RData",sep="")
+ #     browser()
       if (file.exists(monthly_yield_file))
       {
         
@@ -179,18 +193,20 @@ read_wasa_results=function(ctrl_params, components_list, subbas_id)
     res_file=paste(ctrl_params$output_dir,component,".out",sep="")
     check_file(res_file) #check existence of file and issue error message, if necessary
     a = read.table(file=res_file,header = T,skip = 1,na.strings = c("NaN","Inf","-Inf","*"))
+    factorcols = which(unlist(lapply(a[1,], is.factor))) #sometimes, very large numbers can only be read as factors
+    a[,factorcols]=as.numeric(as.character(a[,factorcols])) #convert to numeric
     
     check_subbas(a, res_file, subbas_id)
     
     if(read_date_col)
     {
-      hour= a[,which(names(a) %in% c("dt","DT","timestep","Timestep"))]-1
+      hour= a[,which(names(a) %in% c("dt","DT","timestep","timestep"))]-1
       if (NCOL(hour)==0) hour=0         #if no hour column is present, set to 0
       
       datevec=as.POSIXct(ISOdate(a[,1], 1, 1, hour = hour, min = 0, sec = 0, tz = "GMT"))       #assemble date vector
       if (ctrl_params$start_month!=1)      #treat simulation periods that start mid-year
       {
-        time_offset=difftime(ISOdate(ctrl_params$start_year, ctrl_params$start_month, 1),ISOdate(ctrl_params$start_year, 1, 1),units="secs") #offset that occurs when starting simulation in midyear
+        time_offset=difftime(ISOdate(ctrl_params$start_year, ctrl_params$start_month,  ctrl_params$start_day),ISOdate(ctrl_params$start_year, 1, 1),units="secs") #offset that occurs when starting simulation in midyear
         datevec[a[,1]==ctrl_params$start_year]=   datevec[a[,1]==ctrl_params$start_year]+as.numeric(time_offset)
       }
       datevec=datevec+(a[,2]-1)*3600*24           #add "day of model year" as contained in WASA-file
@@ -264,7 +280,6 @@ parse_wasa_ctrl_params=function(wasa_param_file="../output/Esera_1998-2006/param
   
   ctrl_params=data.frame(a=0)
 
-  
   content=scan(wasa_param_file,what="character",sep="\n",blank.lines.skip=T,comment.char="#",strip.white=T,quiet=T)
 
   {
@@ -274,13 +289,24 @@ parse_wasa_ctrl_params=function(wasa_param_file="../output/Esera_1998-2006/param
     ctrl_params$start_year =as.numeric(strsplit(content[start_line+2], ":")[[1]][2])
     ctrl_params$end_year   =as.numeric(strsplit(content[start_line+3], ":")[[1]][2])
     tt                     =           strsplit(content[start_line+4], ":")[[1]][2]
-    if (!is.finite(tt)) tt = na.omit(as.numeric(strsplit(tt, split="\\s+")[[1]]))[1]
-    ctrl_params$start_month=tt
+    tt = na.omit(as.numeric(strsplit(tt, split="\\s+")[[1]]))
+    ctrl_params$start_month= tt[1]
+    if (length(tt)>1) 
+      ctrl_params$start_day  =tt[2]     else
+      ctrl_params$start_day  = 1
+
+    
     
     tt                     =           strsplit(content[start_line+5], ":")[[1]][2]
-    if (!is.finite(tt)) tt = na.omit(as.numeric(strsplit(tt, split="\\s+")[[1]]))[1]
-    ctrl_params$end_month  =tt
-    
+    tt = na.omit(as.numeric(strsplit(tt, split="\\s+")[[1]]))
+    ctrl_params$end_month= tt[1]
+    if (length(tt)>1) 
+      ctrl_params$end_day  =tt[2]     else
+      {
+        t=ISOdate(ctrl_params$end_year, ((ctrl_params$end_month+1)-1) %% 12 +1, 1) - 3600*24
+        ctrl_params$end_day  = as.POSIXlt(t)$mday
+      }  
+
   }
 
 #  requested_pars=names(ctrl_params) %in% param_list  #find reqested parameters that have been extracted
