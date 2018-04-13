@@ -1,12 +1,12 @@
 #modifies WASA parameters according to parameter_file
 #runs WASA for the first year of simulation period, until soil water storages are in equilibrium
 
+#10.4.2018
 #10.12.2015
 #30.1.2015
 #26.8.2014
-#22.6.2009
-#5.7.2008
-#26.6.2008
+
+#2 Stellen -> eigenen Pfad angeben (z.B. sf): Z. 18, 19
 
 
 runWASAwWarmup=function(
@@ -15,8 +15,8 @@ runWASAwWarmup=function(
   obj_file=paste(working_dir,"curr_obj_fun_val.txt",sep=""),
   wasa_logfile_preruns=paste(working_dir,"wasa_prerun.log",sep=""),
   wasa_logfile=paste(working_dir,"wasa.log",sep=""),
-  wasa_input_dir =paste0(working_dir,"input/isabena_2010-2013/"),      #wasa input directory (with trailing /)
-  wasa_output_dir=paste0(working_dir,"output/isabena_2010-2013/"),      #wasa output directory (with trailing /)
+  wasa_input_dir =paste0(working_dir,"input/sf/"),      #wasa input directory (with trailing /)
+  wasa_output_dir=paste0(working_dir,"output/sf/"),      #wasa output directory (with trailing /)
   init_conds_dir=NULL
   ,...)
 {
@@ -74,8 +74,8 @@ runWASAwWarmup=function(
     target_file=paste(wasa_input_dir,"do.dat",sep="") #file that hold the parameters to be changed
     a=file.copy(target_file,paste(target_file,".full_time",sep=""))   #save original do.dat
     file_content = scan(target_file, what=character(), sep="\n")
-    start_year=as.numeric(strsplit(file_content[4], " ")[[1]][1])
-    start_month=as.numeric(strsplit(file_content[6], " ")[[1]][1])
+    start_year=as.numeric(strsplit(file_content[4], "[ \t]")[[1]][1])
+    start_month=as.numeric(strsplit(file_content[6], "[ \t]")[[1]][1])
     
 	#repeat frst simulation year
 	end_date_prerun=as.POSIXlt(ISOdate(start_year+1, start_month, 1, hour = 0, min = 0, sec = 0, tz = "GMT")-3600*24 )      #assemble date vector
@@ -197,6 +197,12 @@ runWASAwWarmup=function(
     storage_after_file=paste(wasa_output_dir,"storage.stats",sep="")       #get storage contents after run
     storage_after =read.table(storage_after_file, skip=1,header = F,row.names=1)
   
+	contained_in_both = intersect(rownames(storage_after), rownames(storage_before)) #downward compatibility, when snow was not yet implemented
+	
+	#use only fileds contained both dataframes
+	storage_after  = storage_after [contained_in_both, , drop=FALSE]
+	storage_before = storage_before[contained_in_both, , drop=FALSE]
+		
     rel_storage_change= abs(sum(storage_after)-sum(storage_before))
     if (sum(storage_before)!=0) rel_storage_change=rel_storage_change/sum(storage_before) #avoid NaNs sum(storage_before)==0
     if (rel_storage_change > storage_tolerance)    #check if storage changes are below tolerance limit
@@ -210,7 +216,11 @@ runWASAwWarmup=function(
       
       if (fast_converge & any(storage_ratio["river_storage",]>(1+2*storage_tolerance)) | any(storage_ratio["river_storage",]<1/(1+2*storage_tolerance)))
       {
-        river_after =read.table(paste0(wasa_output_dir,"river_storage.stat"      ), skip=1,header = T)
+        river_file = paste0(wasa_output_dir,"river_storage.stat"      )
+		if (!file.exists(river_file)) next
+		river_after =read.table(river_file, header = FALSE, nrows=1)
+		if(any(grepl(unlist(river_after), pattern="UHG"))) next #don't do fastconverge with UHG routing
+		river_after =read.table(river_file, skip=1,header = T)
         if (file.exists(paste0(wasa_output_dir,"river_storage.stat_start")))
           river_before=read.table(paste0(wasa_output_dir,"river_storage.stat_start"), skip=1,header = T)  else
           {river_before=river_after; river_before[,2]=0}  #no prior conditions available, assume zero
