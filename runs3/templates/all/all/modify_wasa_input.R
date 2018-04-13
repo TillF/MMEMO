@@ -394,19 +394,19 @@ modify_wasa_input=function(wasa_input_dir,parameters)
         # multiply stomatal resistance in vegetation.dat by factor
         nn= which(names(parameters)=="stomr_f")
         if (length(nn)>0) {
-          file_content[,2]=file_content[,2]*parameters[nn]
+          file_content[,2]=file_content[,2]*parameters[1,nn]
           parameters <- parameters[-nn]
         }
         # multiply rootdepth in vegetation.dat by factor (all 4 values)
         nn= which(names(parameters)=="rootd_f")
         if (length(nn)>0) {
-          file_content[,c(9:12)]=file_content[,c(9:12)]*parameters[nn]
+          file_content[,c(9:12)]=file_content[,c(9:12)]*parameters[1,nn]
           parameters <- parameters[-nn]
         }
         # multiply albedo in vegetation.dat by factor (all 4 values)
         nn= which(names(parameters)=="albedo_f")
         if (length(nn)>0) {
-          file_content[,c(17:20)]=pmin(1,file_content[,c(17:20)]*parameters[nn])
+          file_content[,c(17:20)]=pmin(1,file_content[,c(17:20)]*parameters[1,nn])
           parameters <- parameters[-nn]
         }
         #re-write file
@@ -432,7 +432,7 @@ modify_wasa_input=function(wasa_input_dir,parameters)
           # get number of horizons
           nhor = file_content[s,2]
           # update parameter
-          file_content[s,12+(1:nhor-1)*13] = pmin(1,file_content[s,12+(1:nhor-1)*13]*parameters[nn])
+          file_content[s,12+(1:nhor-1)*13] = pmin(1,file_content[s,12+(1:nhor-1)*13]*parameters[1,nn])
         }
         parameters <- parameters[-nn]
       }
@@ -513,7 +513,7 @@ modify_wasa_input=function(wasa_input_dir,parameters)
       # multiply lag and response times in response.dat by factor
       nn= which(names(parameters)=="uhg_f")
       if (length(nn)>0) {
-        file_content[,2:3] <- file_content[,2:3]*parameters[nn]
+        file_content[,2:3] <- file_content[,2:3]*parameters[1,nn]
         parameters <- parameters[-nn]
       }
       #re-write file
