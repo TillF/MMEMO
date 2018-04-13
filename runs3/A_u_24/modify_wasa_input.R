@@ -1,7 +1,6 @@
 # modify specified parameter in WASA input files
 
-#9.4.2018
-
+#13.4.2018
 
 modify_wasa_input=function(wasa_input_dir,parameters)
 {
@@ -388,7 +387,7 @@ modify_wasa_input=function(wasa_input_dir,parameters)
 #params in vegetation.dat ####
     if (any(names(parameters)) %in% c("stomr_f", "rootd_f", "albedo_f")) {
         # file that hold the parameters to be changed
-        target_file <- paste(dir_run,"Hillslope/vegetation.dat",sep="/")
+        target_file <- paste(wasa_input_dir,"Hillslope/vegetation.dat",sep="/")
         # read data
         file_content <- read.table(target_file, skip=2, header = FALSE, sep = "\t", dec = ".", fill = TRUE)
         if (all(!is.finite(file_content[,ncol(file_content)]))) file_content[,ncol(file_content)]=NULL  #discard last column if empty
@@ -420,7 +419,7 @@ modify_wasa_input=function(wasa_input_dir,parameters)
 #params in soil.dat ####
     if (any(names(parameters) %in% c("n_f", "cfr"))) {
       # file that hold the parameters to be changed
-      target_file=paste(dir_run,"Hillslope/soil.dat",sep="/")
+      target_file=paste(wasa_input_dir,"Hillslope/soil.dat",sep="/")
       # read data
       file_content = read.table(target_file, skip=2,header = FALSE, sep = "\t", dec = ".", fill = TRUE)
       if (all(!is.finite(file_content[,ncol(file_content)]))) file_content[,ncol(file_content)]=NULL  #discard last column if empty
@@ -460,7 +459,7 @@ modify_wasa_input=function(wasa_input_dir,parameters)
     if (any(names(parameters) %in% c("f_lakemaxvol"))) {
       nn= which(names(parameters)=="f_lakemaxvol")
       # file that holds the parameters to be changed
-      target_file=paste(dir_run,"Reservoir/lake_maxvol.dat",sep="/")
+      target_file=paste(wasa_input_dir,"Reservoir/lake_maxvol.dat",sep="/")
       if(file.exists(target_file)) {
         # read data
         file_content = read.table(target_file, header = FALSE, sep = "\t", skip=2)
@@ -473,7 +472,7 @@ modify_wasa_input=function(wasa_input_dir,parameters)
         write.table(round(file_content, 2), target_file, append = T, row.names=F, col.names=F, quote=F, sep="\t")
       }
       # file that holds the parameters to be changed
-      target_file=paste(dir_run,"Reservoir/lake.dat",sep="/")
+      target_file=paste(wasa_input_dir,"Reservoir/lake.dat",sep="/")
       if(file.exists(target_file)) {
         # read data
         file_content = read.table(target_file, header = FALSE, sep = "\t", skip=2)
@@ -492,7 +491,7 @@ modify_wasa_input=function(wasa_input_dir,parameters)
 #params in calib_wind.dat ####
     if (any(names(parameters) %in% c("f_wind"))) {
       # file that holds the parameters to be changed
-      target_file=paste(dir_run,"Others/calib_wind.dat",sep="/")
+      target_file=paste(wasa_input_dir,"Others/calib_wind.dat",sep="/")
       # read data
       file_content = read.table(target_file, header = FALSE, sep = "\t")
       nn= which(names(parameters)=="f_wind")
@@ -507,7 +506,7 @@ modify_wasa_input=function(wasa_input_dir,parameters)
 #params in response.dat ####
     if (any(names(parameters) %in% c("uhg_f"))){
       # file that hold the parameters to be changed
-      target_file=paste(dir_run,"River/response.dat",sep="/")
+      target_file=paste(wasa_input_dir,"River/response.dat",sep="/")
       # read data
       file_content = read.table(target_file, skip=2,header = FALSE, sep = "\t", dec = ".", fill = TRUE)
       if (all(!is.finite(file_content[,ncol(file_content)]))) file_content[,ncol(file_content)]=NULL  #discard last column if empty
