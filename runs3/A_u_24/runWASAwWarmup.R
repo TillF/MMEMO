@@ -197,6 +197,11 @@ runWASAwWarmup=function(
     storage_after_file=paste(wasa_output_dir,"storage.stats",sep="")       #get storage contents after run
     storage_after =read.table(storage_after_file, skip=1,header = F,row.names=1)
   
+	if (identical(storage_before,0)) #ensure correct structure of variable
+	{
+	  storage_before = storage_after
+	  storage_before$V2 = 0
+	}
 	contained_in_both = intersect(rownames(storage_after), rownames(storage_before)) #downward compatibility, when snow was not yet implemented
 	
 	#use only fileds contained both dataframes
