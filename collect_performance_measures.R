@@ -17,7 +17,7 @@ force_daily=TRUE #for hourly runs: use evaluation of performance measures in dai
 
 library(xlsx)
 
-#read data
+#read general data ####
   configs_dirs      = read.xlsx(file = paste0(base_dir, "comparison.xlsx"), sheetName = "configuration", startRow = 3, endRow = 3, header = FALSE, stringsAsFactors=FALSE)
   configs           = read.xlsx(file = paste0(base_dir, "comparison.xlsx"), sheetName = "configuration", startRow = 2, endRow = 19,header = TRUE , stringsAsFactors=FALSE, colIndex = 1:10)
   enhancement_names = read.xlsx(file = paste0(base_dir, "comparison.xlsx"), sheetName = "configuration", startRow = 2, endRow = 2, header = FALSE,  stringsAsFactors=FALSE, colIndex = 2:10)
@@ -25,7 +25,8 @@ library(xlsx)
   parameterizations_header = read.xlsx(file = paste0(base_dir, "comparison.xlsx"), sheetName = "parameterization", startRow = 1, endRow = 3, header = FALSE, stringsAsFactors=FALSE)
   parameterizations        = read.xlsx(file = paste0(base_dir, "comparison.xlsx"), sheetName = "parameterization", startRow = 4,             header = TRUE,  stringsAsFactors=FALSE)
   
-  
+
+# read data from run-directories ####    
   parameterizations_both=list() #dirty solution: store both variants of IP-values (from daily and hourly resolution))
   parameterizations_both[[1]]=parameterizations
   parameterizations_both[[2]]=parameterizations
@@ -103,7 +104,7 @@ library(xlsx)
 #   if (is.null(parameterizations$rmse_sed_sub6))       parameterizations$rmse_sed_sub6=NA
 #   if (is.null(parameterizations$bias_total_sed_sub6)) parameterizations$bias_total_sed_sub6=NA
 
-#compute metrics 
+#compute metrics
   
   metric_cols = c(
     "sub_wat_dyn", 
@@ -119,14 +120,19 @@ library(xlsx)
 #compute metrics (for later comparison with base parametrisation)
   #water metrics
   parameterizations$sub_wat_dyn = apply(    parameterizations[, grepl(pattern="rmse_qtotal(_|$)", x=names(parameterizations))] , MARGIN = 1, FUN=mean)   #mean of all subbasin RMSE
+  #parameterizations$sub_wat_yil = apply(abs(parameterizations[, grepl(pattern="bias_total_rel_sub" , x=names(parameterizations))]), MARGIN = 1, FUN=mean)  #mean of absolute volume error of subbasins (only used for generating table of performance measures of reference configs)
   parameterizations$sub_wat_yil = apply(abs(parameterizations[, grepl(pattern="bias_total_sub" , x=names(parameterizations))]), MARGIN = 1, FUN=mean)  #mean of absolute volume error of subbasins
   parameterizations$out_wat_dyn = parameterizations$rmse_qtotal_sub6
+  #parameterizations$out_wat_yil = abs(parameterizations$bias_total_rel_sub6) #(only used for generating table of performance measures of reference configs)
   parameterizations$out_wat_yil = abs(parameterizations$bias_total_sub6)
+
   
   #sediment metrics
   parameterizations$sub_sed_dyn = apply(    parameterizations[, grepl(pattern="rmse_sed(_|$)", x=names(parameterizations))] , MARGIN = 1, FUN=mean)   #mean of all subbasin sediment RMSE
+  #parameterizations$sub_sed_yil = apply(abs(parameterizations[, grepl(pattern="bias_total_sed_rel_sub" , x=names(parameterizations))]), MARGIN = 1, FUN=mean)  #mean of absolute mass error of subbasins (only used for generating table of performance measures of reference configs)
   parameterizations$sub_sed_yil = apply(abs(parameterizations[, grepl(pattern="bias_total_sed_sub" , x=names(parameterizations))]), MARGIN = 1, FUN=mean)  #mean of absolute mass error of subbasins
   parameterizations$out_sed_dyn = parameterizations$rmse_sed_sub6
+  #parameterizations$out_sed_yil = abs(parameterizations$bias_total_sed_rel_sub6) #(only used for generating table of performance measures of reference configs)
   parameterizations$out_sed_yil = abs(parameterizations$bias_total_sed_sub6)
   
 #print missing parameterizations
@@ -192,7 +198,7 @@ library(xlsx)
     }
 
   #interpret "temporal resolution" as model enhancement 
-    if (tsc==2)   # should only be done when using metrics cmoputed n the same resolution, i.e. daily
+    if (tsc==2)   # should only be done when using metrics computed in the same resolution, i.e. daily
     { 
       param_ids_daily =      parameterizations$parameterization_ID[grepl(parameterizations$parameterization_ID, pattern="[^89]_._24$")]
       param_ids_hourly   =sub(param_ids_daily, pattern = "_24$", repl="_1")  
@@ -245,9 +251,10 @@ library(xlsx)
 
           
     ###normalize IPs
-        if (any(parameterizations[, norm_cols]<=0)) stop("normalization has negative values, strange.")
-        parameterizations[, I_P_col_names] = parameterizations[, I_P_col_names] / parameterizations[, norm_cols]
-        
+      if (any(is.na(parameterizations[, norm_cols]))) stop("normalization is NA, please check.")
+      if (any(parameterizations[, norm_cols]<=0)) stop("normalization has negative values, strange.")
+      parameterizations[, I_P_col_names] = parameterizations[, I_P_col_names] / parameterizations[, norm_cols]
+          
     ###aggregate special IPs (calib and temporal resolution)
         #aggregate calibration-IPs over model enhancements
         #aux4aggr = sub(x = I_P_special$parameterization_ID, pattern = "[+\\-][0-9]", repl="")
@@ -312,7 +319,7 @@ library(xlsx)
 #    if (!identical(parameterizations_both[[2]][,i], parameterizations_both[[1]][,i]))
 #      print(names(parameterizations_both[[2]])[i])
         
-#add new data to xls-file
+#add new data to xls-file ####
   #create backup of original file
   src_name=paste0(base_dir, "comparison.xlsx")
   info =  file.info(src_name)

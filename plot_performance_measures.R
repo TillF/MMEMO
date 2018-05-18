@@ -8,12 +8,18 @@ saveplots=TRUE
 rescale_ip_values = FALSE #rescale IP-values so their IQR falls within -1...1
 
 #windows = function(...) {x11(...)}
-#### sadf
 
-library(xlsx)
 library(berryFunctions)
 #library(grid)
 library(magic)
+library(xlsx)
+
+
+#cpalette = colorRampPalette(c("red", "yellow", "green")) #colorpalette
+#berry_pal = divPal(n = 16, reverse = FALSE, alpha = 1, extr = FALSE, yb = FALSE,
+#                   yr = FALSE, colors = NULL)                              
+berry_pal = divPal(n = 16, reverse = FALSE, alpha = 1)                              
+
 
 #----load results from files----
 
@@ -43,7 +49,7 @@ target_vars=c("wat", "sed")
 
 
 
-#---- collect performance of reference configurations, add to xlsx (Table 6 ) ----
+#---- collect performance of reference configurations, add to IP_matrices.xlsx (Table 5) ----
 {
   try(detach("package:xlsx"    , unload=TRUE, force = TRUE), silent = TRUE)
   try(detach("package:xlsxjars", unload=TRUE, force = TRUE), silent = TRUE)
@@ -146,10 +152,6 @@ target_vars=c("wat", "sed")
   #round(med_rel_range_I_P$V1, digits=2 )
 }  
 
-
-#cpalette = colorRampPalette(c("red", "yellow", "green")) #colorpalette
-berry_pal = divPal(n = 16, reverse = FALSE, alpha = 1, extr = FALSE, yb = FALSE,
-                   yr = FALSE, colors = NULL)                              
 
 
 #---- plot legends ----
@@ -434,8 +436,11 @@ load(paste0(base_dir, "repl/IP_precision.RData")) #load precision data (IP_preci
   save(list = c("collected_ip_matrices", "collected_sign_matrices", "collected_reference_p"), file=paste0(base_dir,"collected_ip_matrices.RData"))
 }
 
+try(detach("package:xlsx"    , unload=TRUE, force = TRUE), silent = TRUE)
+try(detach("package:xlsxjars", unload=TRUE, force = TRUE), silent = TRUE)
 
-#---- insert IP-matrices into xlsx-file (for unknown reasons, this may require restarting R to work) ----
+stop("Please restart session. sorry for the inconvenience, but otherwise XLConnect and xlxs collide in strange ways.")
+#---- insert IP-matrices into IP_matrices.xlsx (for unknown reasons, this may require restarting R to work) ----
 {
   load(file=paste0(base_dir,"collected_ip_matrices.RData"))
   
@@ -443,6 +448,7 @@ load(paste0(base_dir, "repl/IP_precision.RData")) #load precision data (IP_preci
     try(detach("package:xlsxjars", unload=TRUE, force = TRUE), silent = TRUE)
     try(detach("package:XLConnect", unload=TRUE, force = TRUE), silent = TRUE)
     try(detach("package:XLConnectJars", unload=TRUE, force = TRUE), silent = TRUE)
+    try(detach("package:rJava", unload=TRUE, force = TRUE), silent = TRUE)
   
   library(XLConnect)
   
@@ -461,7 +467,7 @@ load(paste0(base_dir, "repl/IP_precision.RData")) #load precision data (IP_preci
   # mean_rel_range_I_P3 = data.frame(t(mean_rel_range_I_P2[,-1]))
   # names(mean_rel_range_I_P3) =mean_rel_range_I_P2$metric  
   # mean_rel_range_I_P3$ME=rownames(mean_rel_range_I_P)
-  
+
 #prepare sheets for each ME, fill in values (using XLConnect because of better copy options)
   wb <- loadWorkbook(file = paste0(base_dir, "IP_matrices.xlsx"))  
   setStyleAction(wb, XLC$"STYLE_ACTION.NONE") #when writing data, do not touch cell styles
@@ -501,22 +507,28 @@ load(paste0(base_dir, "repl/IP_precision.RData")) #load precision data (IP_preci
     # setCellStyle(wb, sheet = "rainfall", row = 1, col = 1, cellstyle = cs)
   }  
   saveWorkbook(wb, file = paste0(base_dir, "IP_matrices.xlsx"))
-  detach("package:XLConnect", unload=TRUE, force=TRUE)
-  detach("package:XLConnectJars", unload=TRUE, force=TRUE)
-  
-#colour cells (using xlsx because of better formatting options) 
+  try(detach("package:XLConnect", unload=TRUE, force = TRUE), silent = TRUE)
+  try(detach("package:XLConnectJars", unload=TRUE, force = TRUE), silent = TRUE)
+  try(detach("package:rJava", unload=TRUE, force = TRUE), silent = TRUE)
+
+}
+stop("Please restart session. sorry for the inconvenience, but otherwise XLConnect and xlxs collide in strange ways.")
+{    
+#colour cells (using xlsx because of better formatting options)
+  #openxlsx and xlconnect require the definition of styles, so colouring indididual cells becomes a hassle
   library(xlsx)
   
+  
   wb <- loadWorkbook(file = paste0(base_dir, "IP_matrices.xlsx"))  
-  sheets <- getSheets(wb)
+  
+  sheets <- getSheets(wb) 
   
   # #determine number of columns and rows
   # tt = strsplit(names(template_cells_values[length(template_cells_values)]), split="\\.")
   # nrows=as.numeric(tt[[1]][1]) 
   # ncols=as.numeric(tt[[1]][2])
   library(berryFunctions)
-  berry_pal = divPal(n = 16, reverse = FALSE, alpha = 1, extr = FALSE, yb = FALSE,
-                     yr = FALSE, colors = NULL)
+  berry_pal = divPal(n = 16, reverse = FALSE, alpha = 1 )
   
   mlapply <- function(lol,FUN,...){
     llol <- sapply(lol, length)
@@ -536,7 +548,7 @@ load(paste0(base_dir, "repl/IP_precision.RData")) #load precision data (IP_preci
     
     sheetName=sub(enhancement_names[1,i],pattern = "/", repl="_")
 
-    new_sheet=sheets[[sheetName]]
+    new_sheet = sheets[[sheetName]]
     new_rows  <- getRows(new_sheet, rowIndex=3+(1:8))
     new_cells <- getCells(new_rows, colIndex=4+(1:8)) 
     
@@ -555,11 +567,41 @@ load(paste0(base_dir, "repl/IP_precision.RData")) #load precision data (IP_preci
     tt=mlapply(FUN = Fill, lol=list(foregroundColor=berry_pal[colour_indx],
               pattern=t(patterns)), backgroundColor="#FFFFFF") #assemble colours
     
-    plus=function(a,b){b+a}
+    plus=function(a,b){b+a} #should be correct
+    #plus=function(a,b){a+b}
+    plus1=function(a,b){
+      result = list() #CellStyle()
+      
+      #class(result) = "CellStyle" #initialise result
+      
+      for (part in list(a,b))
+      if (class(part)=="CellStyle")
+      for (el in names(part))
+      {
+        if (!is.null(part[[el]]))
+          result[el] =  part[el] else
+          if (is.null(result[[el]])) #dont overwrite existing values
+            result[el] = list(NULL) #preserve empty list elements
+      } else
+      {
+        result[[tolower(class(part))]]=part
+      }  
+      result = result[c("ref","wb","dataFormat","alignment","border","fill","font","cellProtection")]
+      class(result) = "CellStyle" #
+      return(result)
+    }     
+    
+    # rr = plus(a=Alignment(horizontal="ALIGN_CENTER", vertical="VERTICAL_CENTER"),  b=CellStyle(wb)) 
+    # rr2 = Alignment(horizontal="ALIGN_CENTER", vertical="VERTICAL_CENTER") + CellStyle(wb)
+    # is.CellStyle(rr2)
+    # is.CellStyle(rr)
+    # 
+  
     tt = lapply(X = tt, FUN = plus, CellStyle(wb)) #add wb properties to make it a valid cell style
     
     
     plus=function(a,b){a+b}
+    #plus=function(a,b){b+a}
     tt = lapply(X = tt, FUN = plus, Alignment(horizontal="ALIGN_CENTER", vertical="VERTICAL_CENTER")) #add wb properties to make it a valid cell style
     
     tt2=lapply(FUN = Font, X = berry_pal[colour_indx], wb=wb, heightInPoints=7) #assemble font colours
@@ -595,7 +637,10 @@ load(paste0(base_dir, "repl/IP_precision.RData")) #load precision data (IP_preci
   detach("package:xlsx", unload=TRUE)
 }
 
-#---- add summary IP-table to xlsx (Fig. 7)----
+
+
+
+#---- add summary IP-table to IP_matrices.xlsx (Fig. 7)----
 {
   treat_ME8ME9=FALSE  #should "resolution" and "calibration" be treated as ordinary ME?
   library(xlsx)
@@ -604,8 +649,7 @@ load(paste0(base_dir, "repl/IP_precision.RData")) #load precision data (IP_preci
   sheets <- getSheets(wb)
 
   library(berryFunctions)
-  berry_pal = divPal(n = 16, reverse = FALSE, alpha = 1, extr = FALSE, yb = FALSE,
-                     yr = FALSE, colors = NULL)
+  berry_pal = divPal(n = 16, reverse = FALSE, alpha = 1)
 
   mlapply <- function(lol,FUN,...){
     llol <- sapply(lol, length)
@@ -653,9 +697,12 @@ load(paste0(base_dir, "repl/IP_precision.RData")) #load precision data (IP_preci
 
     tt=mlapply(FUN = Fill, lol=list(foregroundColor=berry_pal[colour_indx],
                                     pattern=rep("SOLID_FOREGROUND", length(colour_indx)), backgroundColor=rep("#FFFFFF", length(colour_indx)))) #assemble colours
+    
     plus=function(a,b){b+a}
     tt = lapply(X = tt, FUN = plus, CellStyle(wb)) #add wb properties to make it a valid cell style
 
+    
+    
     plus=function(a,b){a+b}
     tt = lapply(X = tt, FUN = plus, Alignment(horizontal="ALIGN_CENTER", vertical="VERTICAL_CENTER"))
 
@@ -715,7 +762,7 @@ load(paste0(base_dir, "repl/IP_precision.RData")) #load precision data (IP_preci
   
       for (i in 1:length(position_str))
         if (length(position_str[[i]])!=0)
-         tt[[i]]  = tt[[i]] + Border(position=position_str[[i]], pen=pen_str[[i]],color=color_str[[i]])
+         tt[[i]]  = tt[[i]] + Border(position=position_str[[i]], pen=pen_str[[i]],color=color_str[[i]]) 
     }
     mapply(FUN = setCellStyle, cell=cls,  cellStyle=tt) #set styles (rows first, as in new_cells)
   }
@@ -819,6 +866,9 @@ load(paste0(base_dir, "repl/IP_precision.RData")) #load precision data (IP_preci
             {
              #savePlot(file=paste0(base_dir,"plots/single_aspect/","A_vs_B_",combi,".png"), type = "png")
               savePlot(file=paste0(base_dir,"plots/single_aspect/","A_vs_B_",combi,".wmf"), type = "wmf")
+              savePlot(file=paste0(base_dir,"plots/single_aspect/","A_vs_B_",combi,".emf"), type = "emf")
+              savePlot(file=paste0(base_dir,"plots/single_aspect/","A_vs_B_",combi,".ps"), type = "ps")
+              savePlot(file=paste0(base_dir,"plots/single_aspect/","A_vs_B_",combi,".eps"), type = "eps")
             } 
             
           }
@@ -830,6 +880,7 @@ load(paste0(base_dir, "repl/IP_precision.RData")) #load precision data (IP_preci
   
 #---- plot range in improvement values for each enhancement (ASD) (Fig. 5)----
 {
+  library(magic)
   treat_ME8ME9=FALSE  #should "resolution" and "calibration" be treated as ordinary ME?
   asd_pal = colorRampPalette(colors = c("blue","red") )(16)
   
@@ -1008,7 +1059,7 @@ load(paste0(base_dir, "repl/IP_precision.RData")) #load precision data (IP_preci
   #total_median_improvements=apply(X = median_improvements[,-1], MARGIN = 1, FUN = mean, na.rm=TRUE) 
   
 
-#---- aggregate improvement values by ME - overview barplot ----
+#---- aggregate improvement values by ME - overview barplot (Fig. 6) ----
 { 
   treat_ME8ME9=FALSE
   improvements_all = NULL
@@ -1022,11 +1073,13 @@ load(paste0(base_dir, "repl/IP_precision.RData")) #load precision data (IP_preci
                                matrix(as.matrix(p2[sel_rows ,  col_index_ip_values ] ), ncol=1))
     }  
 
+  do_plot = function()
+  {
   windows(width = 6, height = 5.5)
   par(mar=c(8.5,5,2,2))
   ylim = apply(FUN=quantile, MARGIN = 2, X=improvements_all, probs = c(0.45,0.75), na.rm=TRUE)
   ylim = c(min(ylim[1,]), min(10,max(ylim[2,])))
-  boxplot(improvements_all, ylim=ylim, col=c("white","grey"), axes=FALSE, ylab=I [P]~"[-]")
+  boxplot(improvements_all, ylim=ylim, col=c("white","grey"), axes=FALSE, ylab=IP~"[-]")
 #  boxplot(improvements_all, ylim=quantile(improvements_all, probs = c(0.2,0.8), na.rm=TRUE), col=c("white","grey"), axes=FALSE, ylab=I [P]~"[-]")
   #  , xlim=c(0, length(enhancement_names)*2+.5)
   #which(diff(apply(improvements_all, MARGIN = 2, FUN = median, na.rm=TRUE))[(1:9)*2-1]<0) #find MEs where the median is better for A than for B
@@ -1057,7 +1110,7 @@ load(paste0(base_dir, "repl/IP_precision.RData")) #load precision data (IP_preci
   
   
   mtext(side=3, text = round(perc_improved*100, digits = 0), at = 1:(length(enhancement_names)*2), las=2, adj = 1, line=1.5)
-  mtext(side=3, text = I [P]~"> 0 [%]:", at = -3.5, las=1, adj = 0)
+  mtext(side=3, text = "IP > 0 [%]:", at = -3.5, las=1, adj = 0)
   axis(side=3, tick = TRUE, at = (0:(length(enhancement_names)+1))*2-1.5, labels=NA)
 
   #mtext(side=1, text = "ASD:", at = -3.5, las=1, adj = 0, padj = 11)
@@ -1065,14 +1118,39 @@ load(paste0(base_dir, "repl/IP_precision.RData")) #load precision data (IP_preci
   mtext(side=1, text = format(round(med_rel_range_I_P$V1, digits=2), digits = 2 ), at = (1:(length(enhancement_names)))*2-.5, las=1, line=7.2)
   
   axis(mgp=c(3,2,0), hadj = 1, side=1, labels = NA, at = (0:(length(enhancement_names)+1))*2-1.5, las=2, line=7, tcl=0.5)
-  
 
-  
   legend("bottomright", legend = c("A","B"), fill =  c("white","grey"), bg = "white")
+  }
+  
+  do_plot()
+  
   if (saveplots) 
   {
     savePlot(file=paste0(base_dir,"plots/","A_vs_B",".wmf"), type = "wmf" ) 
-    savePlot(file=paste0(base_dir,"plots/","A_vs_B",".png"), type = "png")
+ #   savePlot(file=paste0(base_dir,"plots/","A_vs_B",".png"), type = "png")
+#    savePlot(file=paste0(base_dir,"plots/","A_vs_B",".emf"), type = "emf")
+#    savePlot(file=paste0(base_dir,"plots/","A_vs_B",".ps"), type = "ps")
+#    savePlot(file=paste0(base_dir,"plots/","A_vs_B",".eps"), type = "eps")
+    savePlot(file=paste0(base_dir,"plots/","A_vs_B",".pdf"), type = "pdf")
+    
+    #corrupts graphics
+    # library( ReporteRs )
+    # mydoc <- docx( title = "title" )
+    # mydoc <- addPlot( doc = mydoc, fun = do_plot, vector.graphic=TRUE )
+    # mydoc <- addPlot( doc = mydoc, fun = do_plot, vector.graphic=FALSE )
+    # 
+    # # Add titles and then 'myplot'
+    # #mydoc = addPlot( mydoc, function( ) print( myplot ), vector.graphic=TRUE)  
+    # writeDoc( mydoc, file = paste0(base_dir,"plots/","A_vs_B",".docx"))
+    # 
+    # mydoc <- pptx()
+    # mydoc = addSlide( mydoc, slide.layout = "Title and Content")
+    # mydoc <- addPlot( doc = mydoc, fun = do_plot, vector.graphic=TRUE, width = 6, height = 5.5)
+    # writeDoc( mydoc, file = paste0(base_dir,"plots/","A_vs_B",".pptx"))
+    
+    
+    
+    
   }      
 
 }
@@ -1148,7 +1226,7 @@ load(paste0(base_dir, "repl/IP_precision.RData")) #load precision data (IP_preci
 }
 
 
-#---- plot best two MEs for each parameterisation () ----
+#---- plot best two MEs for each parameterisation (Figure 8) ----
 {
     #me_colors=c("cyan","blue", "darkgreen", "lightgreen", "orange", "grey", "magenta")
   me_colors=c("#a6cee3","#1f78b4","#fdbf6f","#b2df8a","#33a02c","#fb9a99","#e31a1c") #colorbrewer palette
