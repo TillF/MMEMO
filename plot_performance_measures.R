@@ -194,7 +194,7 @@ target_vars=c("wat", "sed")
   font_size = 2.5
  
   image(col = berry_pal, z = arev(t(cbind(15:1, NA)),c(FALSE, TRUE)), axes=FALSE)
-  mtext(side = 3, outer = FALSE, adj = 0., padj=0, text=I [P]~"-value", cex = font_size)
+  mtext(side = 3, outer = FALSE, adj = 0., padj=0, text=substitute(paste(italic("IP"),"-value")), cex = font_size)
   
   
   y = 0.0+c(0.95, 0.5, 0.05)
