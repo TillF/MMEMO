@@ -385,7 +385,7 @@ modify_wasa_input=function(wasa_input_dir,parameters)
     } 
 
 #params in vegetation.dat ####
-    if (any(names(parameters)) %in% c("stomr_f", "rootd_f", "albedo_f")) {
+    if (any(names(parameters) %in% c("stomr_f", "rootd_f", "albedo_f"))) {
         # file that hold the parameters to be changed
         target_file <- paste(wasa_input_dir,"Hillslope/vegetation.dat",sep="/")
         # read data
@@ -613,6 +613,41 @@ modify_wasa_input=function(wasa_input_dir,parameters)
       no_params=NCOL(parameters)
       next
     }
+    
+#params in reservoir.dat ####
+    reservoir_param_names=c("maxlevel", "damflow", "damqrac", "withdrawal", "damdead", "damalert", "dama", "damb", "qoutlet", "damc", "damd")
+    if ( sub(names(parameters)[1], pattern ="_f$*", repl="") %in% reservoir_param_names ) 
+    {
+      target_file=paste(wasa_input_dir,"Reservoir/reservoir",sep="") #file holding parameters to be changed
+      
+      if (!file.exists(paste0(target_file, ".calib_bak")))   #create backup if not existing
+        file.copy(paste0(target_file,".dat"), paste0(target_file,".calib_bak"))
+      
+      if (!file.exists(paste(target_file,".calib_bak",sep=""))) 
+        stop(paste(target_file,".calib_bak or .dat not found.",sep=""))
+      
+      file_header  = scan(paste(target_file,".calib_bak",sep=""),what="character",sep="\n",n=2,strip.white=T,quiet=T)
+      file_content = read.table(paste(target_file,".calib_bak",sep=""), skip=2,row.names=NULL, header = FALSE, sep = "\t", dec = ".")
+      #get column names
+      file_cols = strsplit(x = file_header[2], split = c(",","\t"))[[1]] 
+      file_cols = sub(file_cols, pattern = " *", repl="") #remove spaces
+      file_cols = sub(file_cols, pattern = "[\\[\\(].*", repl="") #remove parts in braces
+      
+      #modify reservoir parameters by specified factor or use value directly
+      while (any(sub(names(parameters),pattern ="_f$*", repl="") %in% reservoir_param_names))
+      {
+        cur_param=as.vector(na.omit(match(reservoir_param_names, sub(names(parameters),pattern ="_f$*", repl="")))[1])            #find the next river parameter in 'parameters'
+        param_col=which(file_cols==sub(pattern="_f$", repl="", names(parameters)[cur_param]))  #find the corresponding column to current parameter in 'reservoir_param_names' and reservoir.dat 
+        if (grepl(pattern = "_f$", x = names(parameters)[cur_param]))
+          file_content[,param_col]=file_content[,param_col]*parameters[1,cur_param] else  #use as factor modifying the current value
+            file_content[,param_col]=                         parameters[1,cur_param]   #use directly
+        parameters=parameters[-cur_param] #remove this parameter from list
+        no_params=no_params-1 
+      }
+      write(file_header, file = paste(target_file,".dat",sep=""))     #write header
+      write.table(file_content, file = paste(target_file,".dat",sep=""), append = TRUE, quote = F,row.names=F,col.names=F,sep="\t")
+      next
+    } 
     else
     {
       stop(paste("Unknown parameter",names(parameters)[1]))
