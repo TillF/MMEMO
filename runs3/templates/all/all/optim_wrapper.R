@@ -109,7 +109,6 @@ print("write param file")
   source("runWASAwWarmup.R")   
   res=runWASAwWarmup(working_dir=working_dir, init_conds_dir = init_conds_dir, detailed_output=detailed_output)   
   
-
   print("computing objfun")
   if (res<0) #stop execution right away
     stop("something went wrong")
@@ -191,8 +190,8 @@ print("check update IC")
       if (length(statfiles)!=0)
       {
         print("obj fun improved,  updating IC") #dd
-       dest_dir  = dir(path = template_dir, pattern =sub(init_conds_dir, pattern = "/", replacement = ""), recursive = TRUE, include.dirs = TRUE )
-        dest_dir  =paste0(template_dir,dest_dir)
+        dest_dir  = dir(path = template_dir, pattern =sub(init_conds_dir, pattern = "/", replacement = "$"), recursive = TRUE, include.dirs = TRUE )
+        dest_dir  =paste0(template_dir,dest_dir,"/")
         dest_dir_org=paste0(sub(pattern = "/$", repl="", dest_dir),"_org") #without slash
         print(paste("updating initial conditions from", wasa_input_dir,"to", dest_dir))
         if (!file.exists(dest_dir_org)) #save original files
