@@ -1,12 +1,11 @@
 #modifies WASA parameters according to parameter_file
 #runs WASA for the first year of simulation period, until soil water storages are in equilibrium
 
+#4.1.2018
 #10.4.2018
 #10.12.2015
 #30.1.2015
 #26.8.2014
-
-#2 Stellen -> eigenen Pfad angeben (z.B. sf): Z. 18, 19
 
 
 runWASAwWarmup=function(
@@ -15,8 +14,6 @@ runWASAwWarmup=function(
   obj_file=paste(working_dir,"curr_obj_fun_val.txt",sep=""),
   wasa_logfile_preruns=paste(working_dir,"wasa_prerun.log",sep=""),
   wasa_logfile=paste(working_dir,"wasa.log",sep=""),
-  wasa_input_dir =paste0(working_dir,"input/sf/"),      #wasa input directory (with trailing /)
-  wasa_output_dir=paste0(working_dir,"output/sf/"),      #wasa output directory (with trailing /)
   init_conds_dir=NULL
   ,...)
 {
@@ -26,6 +23,13 @@ runWASAwWarmup=function(
 #  wasa_logfile_preruns=paste(working_dir,"wasa_prerun.log",sep="")          #logfile for wasa pre-run-phase
 #  wasa_logfile        =paste(working_dir,"wasa.log",sep="")                         #logfile for wasa actual run
   
+  #try to find wasa_input_dir, if not specified
+  if (!exists("wasa_input_dir") || is.null(wasa_input_dir))
+  {
+    path2dodat=dir(working_dir, recursive = TRUE, pattern = "do.dat") #search for do.dat
+    wasa_input_dir =paste0(working_dir, sub(path2dodat, pattern = "do.dat", repl=""))
+  }
+    
   fast_converge =TRUE #try to extrapolate change in state variables (only river storage so far) to accelerate conversion
   prerun_length=365 #length of prerun phase [days] (use 365 for a year and 28 for a month)
   
@@ -74,6 +78,10 @@ runWASAwWarmup=function(
     target_file=paste(wasa_input_dir,"do.dat",sep="") #file that hold the parameters to be changed
     a=file.copy(target_file,paste(target_file,".full_time",sep=""))   #save original do.dat
     file_content = scan(target_file, what=character(), sep="\n")
+    wasa_output_dir =paste0(wasa_input_dir, sub(file_content[3], pattern = " .*", repl=""))
+    for (i in 1:3) #remove simplify ".." in relative paths, if possible
+      wasa_output_dir = sub(wasa_output_dir, pattern = "/[^/]*/\\.\\.", repl="")
+
     start_year=as.numeric(strsplit(file_content[4], "[ \t]")[[1]][1])
     start_month=as.numeric(strsplit(file_content[6], "[ \t]")[[1]][1])
     

@@ -2,12 +2,19 @@
 #modifies WASA parameters in parameter_file "paramset.txt" 
 #calls runWASAwWarmup to run WASA and compute_goodness_measures to compute performance
 
-#25.7.2014
+#26.2.2019
 
 optim_wrapper=function(parms=NULL)
 #  names(parms)=c("gw_delay_f","soildepth_f","kf_bedrock_f","riverdepth_f","kf_scale_f","ksat_factor")[1:length(parms)] #name vector
 {
+  #return(runif(1))
   update_initial_conditions=TRUE                   # update initial conditions, if a new best has been achieved
+  
+ if (is.null(parms)) 
+  {
+    parms=rep(1, length(parnames)) #use 1's as default
+    names(parms)=parnames #parnames need to be defined in the global scope
+  }
   
     names(parms) = sub(pattern="^x\\.", replacement="", x=names(parms)) #MBO prependens "x.", remove it
 #  return(runif(n=1)) #debug setting
@@ -30,12 +37,7 @@ optim_wrapper=function(parms=NULL)
 #               "riv_depth_f", "riv_width_f", "riv_side_ratio_f", "riv_bottom_width_of_floodplain_f", "riv_side_ratio_floodplains_f", "riv_channel_slope_f", "riv_length_f", "riv_manningn_f", "riv_manningn_floodplain_f", "riv_baseflowalphafactor_f", "riv_Muskingum_X_f","riv_Muskingum_K_f", "riv_Ksat_f")
 #    names(parms)=parnames[1:length(parms)] #name vector
 #  }
-  if (is.null(parms)) 
-  {
-	parms=rep(1, length(parnames)) #use 1's as default
-	names(parms)=parnames #parnames need to be defined in the global scope
-   }
-  
+
   print("choosing working dir")
   working_dir=""
   random_number=as.integer(runif(1,0,1e7))
@@ -73,7 +75,10 @@ optim_wrapper=function(parms=NULL)
             #        unlink(paste0(working_dir,"output/"), recursive=TRUE, force=TRUE)  #better remove everything in output 
             file.rename(from=paste0(working_dir,"input/"), to=paste0(working_dir,"input_prev"))  #save previous run
             
-            wasa_input_dir =paste(working_dir,"input/isabena_2010-2013",sep="")
+            #infer input dir from location of do.dat
+            wasa_input_dir = dir(path = working_dir, include.dirs = TRUE, pattern="^do\\.dat$", recursive=TRUE, full.names = T)
+            wasa_input_dir = sub(wasa_input_dir, pattern="/do\\.dat$", replacement = "" )
+            
             unlink(paste0(wasa_input_dir,"_prev"), recursive = TRUE) #delete old previous
             file.rename(from=wasa_input_dir, to=paste0(wasa_input_dir,"_prev")) #rename last run to "_prev"
           }
@@ -102,8 +107,16 @@ print("write param file")
   print("starting wasa")
   init_conds_dir = "init_conds/"
   source("runWASAwWarmup.R")   
-  res=runWASAwWarmup(working_dir=working_dir, init_conds_dir = init_conds_dir)   
+  res=runWASAwWarmup(working_dir=working_dir, init_conds_dir = init_conds_dir, detailed_output=detailed_output)   
   
+
+  print("computing objfun")
+  if (res<0) #stop execution right away
+    stop("something went wrong")
+  
+  wasa_input_dir = attr(res, "wasa_input_dir")
+  wasa_output_dir =attr(res, "wasa_output_dir")
+   
 
   print("computing objfun")
 if (res<0)
@@ -116,7 +129,7 @@ if (res<0)
 
   #settings
   target_component=c("River_Flow")   #compute goodness measures based on this flow component
-  # needed for computation of goodness
+  # needed for computation of goodness measures
   subbas_id=1:6                                     #load all discharge data
   start_date=as.POSIXct(ISOdate(2011, 6, 1, 0, min = 0, sec = 0, tz = "GMT"), tz = "GMT")   #begin of SESAM-II monitoring phase
   end_date  =as.POSIXct(ISOdate(2016,4,30,23, min = 0, sec = 0, tz = "GMT"), tz = "GMT")
@@ -130,9 +143,7 @@ if (res<0)
   }    
   
   source("compute_goodness_measures.R")
-  wasa_input_dir =paste(working_dir,"input/isabena_2010-2013/",sep="")      #wasa input directory (with trailing /)
-  wasa_output_dir=paste(working_dir,"output/isabena_2010-2013/",sep="")      #wasa output directory (with trailing /)
-
+ 
   measures = compute_goodness_measures(wasa_output_dir, wasa_input_dir, subbas_id, n_periods=1,start_date=start_date,end_date=end_date,target_component=target_component) 
   source("compute_obj_fun.R", local=TRUE)
   
@@ -180,7 +191,8 @@ print("check update IC")
       if (length(statfiles)!=0)
       {
         print("obj fun improved,  updating IC") #dd
-		dest_dir  =paste0(template_dir,"input/isabena_2010-2013/",init_conds_dir,sep="")
+       dest_dir  = dir(path = template_dir, pattern =sub(init_conds_dir, pattern = "/", replacement = ""), recursive = TRUE, include.dirs = TRUE )
+        dest_dir  =paste0(template_dir,dest_dir)
         dest_dir_org=paste0(sub(pattern = "/$", repl="", dest_dir),"_org") #without slash
         print(paste("updating initial conditions from", wasa_input_dir,"to", dest_dir))
         if (!file.exists(dest_dir_org)) #save original files
