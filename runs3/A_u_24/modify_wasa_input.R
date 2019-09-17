@@ -183,7 +183,6 @@ modify_wasa_input=function(wasa_input_dir,parameters)
       if (!file.exists(paste(target_file,".calib_bak",sep="")))   #create backup if not existing
         file.copy(paste(target_file,".dat",sep=""),paste(target_file,".calib_bak",sep=""))
       
-      #browser()
       file_content = read.table(paste(target_file,".calib_bak",sep=""), skip=2,header = FALSE, sep = "\t", dec = ".", fill = TRUE)
       if (all(!is.finite(file_content[,ncol(file_content)]))) file_content[,ncol(file_content)]=NULL  #discard last column if empty
       

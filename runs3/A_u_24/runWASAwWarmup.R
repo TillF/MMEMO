@@ -1,12 +1,11 @@
 #modifies WASA parameters according to parameter_file
 #runs WASA for the first year of simulation period, until soil water storages are in equilibrium
 
+#17.9.2019
 #4.1.2018
 #10.4.2018
 #10.12.2015
 #30.1.2015
-#26.8.2014
-
 
 runWASAwWarmup=function(
   working_dir="./",
@@ -26,7 +25,7 @@ runWASAwWarmup=function(
   #try to find wasa_input_dir, if not specified
   if (!exists("wasa_input_dir") || is.null(wasa_input_dir))
   {
-    path2dodat=dir(working_dir, recursive = TRUE, pattern = "do.dat") #search for do.dat
+    path2dodat=dir(working_dir, recursive = TRUE, pattern = "do.dat$") #search for do.dat
     wasa_input_dir =paste0(working_dir, sub(path2dodat, pattern = "do.dat", repl=""))
   }
     
@@ -82,8 +81,12 @@ runWASAwWarmup=function(
     for (i in 1:3) #remove simplify ".." in relative paths, if possible
       wasa_output_dir = sub(wasa_output_dir, pattern = "/[^/]*/\\.\\.", repl="")
 
-    start_year=as.numeric(strsplit(file_content[4], "[ \t]")[[1]][1])
-    start_month=as.numeric(strsplit(file_content[6], "[ \t]")[[1]][1])
+    start_year=scan(text=file_content[4], what = numeric(), n=1)
+    if (!is.finite(start_year)) stop("Could read start year from do.dat, please check format.")
+    start_month=scan(text=file_content[6], what = numeric(), n=1)
+    if (!is.finite(start_month)) stop("Could read start month from do.dat, please check format.")
+    
+    
     
 	#repeat frst simulation year
 	end_date_prerun=as.POSIXlt(ISOdate(start_year+1, start_month, 1, hour = 0, min = 0, sec = 0, tz = "GMT")-3600*24 )      #assemble date vector
