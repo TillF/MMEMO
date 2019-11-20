@@ -417,6 +417,8 @@ runWASAwWarmup=function(
   
     cat(paste("Finished actual simulation...\n"))
   
+    attr(r_val, "wasa_input_dir")  = wasa_input_dir  
+    attr(r_val, "wasa_output_dir") = wasa_output_dir  
   
   return(r_val)
   

@@ -36,6 +36,12 @@ if ((exists("use_existing_run") && use_existing_run)) #use existing run
       stop("something went wrong")
   }    
   
+# wasa_input_dir =paste(working_dir,"input/isabena_2010-2013/",sep="")      #wasa input directory (with trailing /)
+# wasa_output_dir=paste(working_dir,"output/isabena_2010-2013/",sep="")      #wasa output directory (with trailing /)
+
+wasa_input_dir = attr(res, "wasa_input_dir")
+wasa_output_dir =attr(res, "wasa_output_dir")
+
 
   
 #compute performance measures  
@@ -56,8 +62,6 @@ if ((exists("use_existing_run") && use_existing_run)) #use existing run
   }      
 
   source("compute_goodness_measures.R")
-wasa_input_dir =paste(working_dir,"input/isabena_2010-2013/",sep="")      #wasa input directory (with trailing /)
-wasa_output_dir=paste(working_dir,"output/isabena_2010-2013/",sep="")      #wasa output directory (with trailing /)
 
 if (!exists("force_daily")) force_daily=FALSE #do not aggregate hourly results, unless enabled
 measures = compute_goodness_measures(wasa_output_dir, wasa_input_dir, subbas_id = subbas_id, n_periods=1,start_date=start_date,end_date=end_date,target_component=target_component, force_daily = force_daily)
