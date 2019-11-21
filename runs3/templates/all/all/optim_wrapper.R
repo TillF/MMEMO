@@ -54,14 +54,14 @@ optim_wrapper=function(parms=NULL)
     
     if (!file.exists(lockfile))    
     {
-      if (template_dir=="" && !file.exists(working_dir_t)) next #thread dir not found and no tmeplate available
+      if (template_dir=="" && !file.exists(working_dir_t)) next #thread dir not found and no template available
       
       lock_hdl <- file(lockfile, "w+")
-      cat(paste0(random_number,"_",slave_no),file=lock_hdl)  #write random number and slave-id to lockfile
+     cat(paste0(random_number,"_",slave_no),file=lock_hdl)  #write random number and slave-id to lockfile
   	  flush(lock_hdl)                   #ensure that this isnt stuck in the I/O cache
       close(lock_hdl)
 
-	  file_cont=file_cont=scan(file=lockfile,what=character(),sep="_")
+	  file_cont=scan(file=lockfile,what=character(),sep="_")
 	  r_num = file_cont[1] #use only the random number, discard the slave-id
 	  
       if (!is.null(file_cont[1]) &  !is.na(file_cont[1]) &  all(random_number==r_num)) #check if only this thread wrote to the lockfile. This is done because successive file.exist and file.create or file.copy may be too slow and don't ensure exclusive access
@@ -73,15 +73,16 @@ optim_wrapper=function(parms=NULL)
           if (template_dir!="")
           {    
             #        unlink(paste0(working_dir,"output/"), recursive=TRUE, force=TRUE)  #better remove everything in output 
-            file.rename(from=paste0(working_dir,"input/"), to=paste0(working_dir,"input_prev"))  #save previous run
+            #file.rename(from=paste0(working_dir,"input/"), to=paste0(working_dir,"input_prev"))  #save previous run
             
             #infer input dir from location of do.dat
-            wasa_input_dir = dir(path = working_dir, include.dirs = TRUE, pattern="^do\\.dat$", recursive=TRUE, full.names = T)
+            wasa_input_dir = dir(path = working_dir_t, include.dirs = TRUE, pattern="^do\\.dat$", recursive=TRUE, full.names = T)
+            wasa_input_dir=wasa_input_dir[!grepl(wasa_input_dir, pattern = "_prev/do.dat$")] #ignore the _prev version
             wasa_input_dir = sub(wasa_input_dir, pattern="/do\\.dat$", replacement = "" )
             
             unlink(paste0(wasa_input_dir,"_prev"), recursive = TRUE) #delete old previous
             file.rename(from=wasa_input_dir, to=paste0(wasa_input_dir,"_prev")) #rename last run to "_prev"
-          }
+ 
         
         if (template_dir!="")
           file.copy(from=paste0(template_dir,"."), to=working_dir_t, overwrite=TRUE, recursive=TRUE)
