@@ -78,8 +78,9 @@ runWASAwWarmup=function(
     a=file.copy(target_file,paste(target_file,".full_time",sep=""))   #save original do.dat
     file_content = scan(target_file, what=character(), sep="\n")
     wasa_output_dir =paste0(wasa_input_dir, sub(file_content[3], pattern = " .*", repl=""))
-    for (i in 1:3) #remove simplify ".." in relative paths, if possible
-      wasa_output_dir = sub(wasa_output_dir, pattern = "/[^/]*/\\.\\.", repl="")
+    #remove simplify ".." in relative paths, if possible
+	wasa_output_dir = gsub(wasa_output_dir, pattern = "/./", repl="")
+    wasa_output_dir = gsub(wasa_output_dir, pattern = "/[^/]*/\\.\\.", repl="")
 
     start_year=scan(text=file_content[4], what = numeric(), n=1)
     if (!is.finite(start_year)) stop("Could read start year from do.dat, please check format.")
