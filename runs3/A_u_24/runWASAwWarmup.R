@@ -26,6 +26,7 @@ runWASAwWarmup=function(
   if (!exists("wasa_input_dir") || is.null(wasa_input_dir))
   {
     path2dodat=dir(working_dir, recursive = TRUE, pattern = "do.dat$") #search for do.dat
+	path2dodat = path2dodat[!grepl(path2dodat, pattern="_prev/do\\.dat")]  #exclude any directories with "_prev"
     wasa_input_dir =paste0(working_dir, sub(path2dodat, pattern = "do.dat", repl=""))
   }
     
@@ -77,9 +78,9 @@ runWASAwWarmup=function(
     target_file=paste(wasa_input_dir,"do.dat",sep="") #file that hold the parameters to be changed
     a=file.copy(target_file,paste(target_file,".full_time",sep=""))   #save original do.dat
     file_content = scan(target_file, what=character(), sep="\n")
-    wasa_output_dir =paste0(wasa_input_dir, sub(file_content[3], pattern = " .*", repl=""))
+    wasa_output_dir =paste0(wasa_input_dir, sub(file_content[3], pattern = "[ \t].*", repl=""))
     #remove simplify ".." in relative paths, if possible
-	wasa_output_dir = gsub(wasa_output_dir, pattern = "/./", repl="")
+	wasa_output_dir = gsub(wasa_output_dir, pattern = "/\\./", repl="/")
     wasa_output_dir = gsub(wasa_output_dir, pattern = "/[^/]*/\\.\\.", repl="")
 
     start_year=scan(text=file_content[4], what = numeric(), n=1)

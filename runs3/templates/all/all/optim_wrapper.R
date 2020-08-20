@@ -82,7 +82,7 @@ optim_wrapper=function(parms=NULL)
             
             unlink(paste0(wasa_input_dir,"_prev"), recursive = TRUE) #delete old previous
             file.rename(from=wasa_input_dir, to=paste0(wasa_input_dir,"_prev")) #rename last run to "_prev"
- 
+          }
         
         if (template_dir!="")
           file.copy(from=paste0(template_dir,"."), to=working_dir_t, overwrite=TRUE, recursive=TRUE)
