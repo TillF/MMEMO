@@ -1,0 +1,18 @@
+GAUGE	FOREIGN_ID	SUBBAS_ID	AREA_SUBBAS_KM2	AREA_UPSTREAM_KM2
+Cabecera	0	1	144.58	144.58
+Villacarli	0	2	37.65	37.65
+Carrasquero	0	3	25.05	25.05
+Ceguera	0	4	28.53	28.53
+Lascuarre	0	5	44.28	44.28
+Capella	0	6	144.01	424.1
+con Isab-Esera	0	7	14.65	438.75
+upper N-Esera	0	10	63.71	346.16
+lower N-Esera	0	11	91.92	438.08
+Barbaruens	0	12	61.41	61.41
+Campo	0	13	65.59	565.08
+Barranco Espluga	0	14	75.04	75.04
+Perarrua	0	15	134.45	774.57
+Gauge Graus	0	16	113.07	887.64
+Barasona	0	20	65.5	1391.89
+Sarron	0	21	121.97	121.97
+Eriste	0	22	282.45	282.45
