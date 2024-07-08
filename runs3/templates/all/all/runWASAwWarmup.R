@@ -112,7 +112,8 @@ runWASAwWarmup=function(
     write.table(file_content, file = target_file, append = F, quote = F, row.names=F, col.names=F, sep="\t")   #rewrite file
     flushfile(target_file) #ensure file has been written completely
 
-    a=file.rename(wasa_logfile_preruns,paste(wasa_logfile_preruns,"_prev",sep=""))   #save previous runlog
+    if (file.exists(wasa_logfile_preruns))
+      a=file.rename(wasa_logfile_preruns,paste(wasa_logfile_preruns,"_prev",sep=""))   #save previous runlog
     
     wasa_output_dir_noslash=substr(wasa_output_dir,1,nchar(wasa_output_dir)-1)
     unlink(paste0(wasa_output_dir_noslash,"_prev"), recursive = TRUE) #delete old previous output
@@ -374,7 +375,8 @@ runWASAwWarmup=function(
   
   
   #actual simulation
-    a=file.rename(wasa_logfile,paste(wasa_logfile,"_prev",sep=""))   #save previous runlog
+    if (file.exists(wasa_logfile))  
+      a=file.rename(wasa_logfile,paste(wasa_logfile,"_prev",sep=""))   #save previous runlog
     a=file.rename(paste(target_file,".full_time",sep=""),target_file)   #restore original do.dat
     flushfile(target_file) #ensure file has been written completely
     cat(paste("Starting actual simulation...\n"))

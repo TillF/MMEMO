@@ -12,11 +12,11 @@
   #  obj_fun_desc="mean subbasin nash";
   #  return_val = -mean(as.matrix(measures[1, grepl(pattern="ns_coeff(_|$)", x=names(measures))]))  #mean of all ns_coeffs
 
-#   obj_fun_desc="mean subbasin rmse";
-#   return_val = mean(as.matrix(measures[1, grepl(pattern="rmse_qtotal(_|$)", x=names(measures))]))  #mean of all rmse-values
+  obj_fun_desc="mean subbasin rmse";
+  return_val = mean(as.matrix(measures[1, grepl(pattern="rmse_qtotal(_|$)", x=names(measures))]))  #mean of all rmse-values
 
-  obj_fun_desc="RMSE(sed) outlet";
-  return_val = measures$rmse_sed_sub6 #RMSE(sed) outlet
+#  obj_fun_desc="RMSE(sed) outlet";
+#  return_val = measures$rmse_sed_sub6 #RMSE(sed) outlet
   
 #  obj_fun_desc="mean subbasin RMSE(sed)";
 #  return_val = mean(as.matrix(measures[1, grepl(pattern="rmse_sed(_|$)", x=names(measures))]))  #mean of all sediment RMSEs
@@ -38,7 +38,8 @@
   if (exists("force_daily") && force_daily)
     obj_file=paste(working_dir,"curr_obj_fun_val_day.txt",sep="") else 
     obj_file=paste(working_dir,"curr_obj_fun_val.txt",sep="") 
-  a=file.rename(obj_file,paste(obj_file,"_prev",sep=""))   #copy objective-function file
+  if (file.exists(obj_file)) #rename old file, if present
+    a=file.rename(obj_file,paste(obj_file,"_prev",sep=""))   #copy objective-function file
   write(content, file = obj_file)
   
   

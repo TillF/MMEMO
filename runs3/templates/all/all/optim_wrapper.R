@@ -97,7 +97,8 @@ optim_wrapper=function(parms=NULL)
 #write parameters to file paramset.txt 
 print("write param file")
   parameter_file=paste(working_dir,"paramset.txt",sep="")                   #exchange-file for communicating parameters with runWASAwWarmup.R
-  a=file.rename(parameter_file,paste(parameter_file,"_prev",sep=""))   #keep previous version of parameter file
+  if (file.exists(parameter_file))
+    a=file.rename(parameter_file,paste(parameter_file,"_prev",sep=""))   #keep previous version of parameter file
   #write file header
   write.table("#control file for modification of WASA-parameters, to be used by optim_wrapper.R (write) and runWASAwWarmup.R (read)", file = parameter_file, quote = FALSE,row.names = FALSE,col.names = FALSE)
   write.table("parameter\tvalue", file = parameter_file, quote = FALSE,row.names = FALSE,col.names = FALSE,append=TRUE)
@@ -112,7 +113,7 @@ print("write param file")
   
   print("computing objfun")
   if (res<0) #stop execution right away
-    stop("something went wrong")
+    stop("something went wrong whne calling binary.")
   
   wasa_input_dir = attr(res, "wasa_input_dir")
   wasa_output_dir =attr(res, "wasa_output_dir")
@@ -145,8 +146,10 @@ if (res<0)
   source("compute_goodness_measures.R")
  
   measures = compute_goodness_measures(wasa_output_dir, wasa_input_dir, subbas_id, n_periods=1,start_date=start_date,end_date=end_date,target_component=target_component) 
-  source("compute_obj_fun.R", local=TRUE)
-  
+  source("compute_obj_fun.R", local=TRUE) #side effect: set "return_val" as the value of the actual goodness function
+  if (is.null(return_val)) #stop execution right away
+    stop("Objective function could not be computed - probably reference to non-existent goodness measure in compute_obj_fun.R?.")
+
 }
   
 

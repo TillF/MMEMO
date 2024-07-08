@@ -30,8 +30,8 @@ Rmpi
 7. The main workflow of the calibration is as such: 
 
 	job_parallel.pbs [Job to be submitted to the compute server)
-		calibrate_main_dds_mpi.R* (calibration without sediments)
-			optim_pdds() (optimizer, can also be "optim_ppso_robust" or the respective serial versions)	
+		calibrate_main_dds_mpi.R (calibration without sediments)
+			optim_pdds() (optimizer, can also be "optim_*_robust" for the parallelized versions)	
 				optim_wrapper.R (this is the function called by the optimizer)
 					runWASAwWarmup.R 
 						modify_wasa_input.R (adjust WASA input files according to desired parameter values)
@@ -41,9 +41,7 @@ Rmpi
 						read_wasa_results()					
 					compute_obj_fun.R (compute the objective function based on selected goodness measure(s))	
 				
-	*This may als be replaced by
-	calibrate_main_dds_mpi_sed.R (calibration with sediments)
-	
+		
 The flow should be tested beforehand by calling test_wrapper.R (locally and on orson), which mimics a call to optim_wrapper.R (and below).
 
 8. Extend the calibration towards snow parameters

@@ -61,7 +61,7 @@ source("optim_wrapper.R") #include objective function
     
 #test    
 #parms=starting.values[,1]
-#res=optim_wrapper(parms)
+#res=optim_wrapper(parms) #This is a single call. Test this first, it should work without errors.
 
 #full call
     res <- optim_pdds_robust(objective_function=optim_wrapper, number_of_particles=15, number_of_parameters=NROW(param_ranges), parameter_bounds=param_ranges, initial_estimates=starting.values, lhc_init=TRUE, part_xchange=3,

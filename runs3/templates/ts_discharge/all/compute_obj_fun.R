@@ -30,6 +30,7 @@
   if (exists("force_daily") && force_daily)
     obj_file=paste(working_dir,"curr_obj_fun_val_day.txt",sep="") else 
     obj_file=paste(working_dir,"curr_obj_fun_val.txt",sep="") 
+  if (file.exists(obj_file)) #rename old file, if present
   a=file.rename(obj_file,paste(obj_file,"_prev",sep=""))   #copy objective-function file
   write(content, file = obj_file)
   
