@@ -1,76 +1,69 @@
-Running WASA-calibration on UP compute server (orson)
+Running WASA-calibration on UP compute server (HPC)
 ----------------------------------------------------
 Till Francke, 7/2024
 (ZIM-related instructions are from 2017, please update)
 
 Preparations:
-1. get account on compute server "orson" (Maximilian Voit Herbst, ZIM)
-2. log on to orson2.rz.uni-potsdam.de, e.g. using Putty
-3. download necessary R-packages as source files like
- wget https://cran.r-project.org/src/contrib/lhs_0.14.tar.gz
-required packages:
-lhs
-ppso
-Rmpi
- 
-4. install all packages like
- R --vanilla CMD INSTALL lhs_0.14.tar.gz
- ...[pso]
- R --vanilla CMD INSTALL Rmpi_0.6-6.tar.gz --configure-args="--with-Rmpi-include=/usr/include/openmpi-x86_64 -with-Rmpi-libpath=/usr/lib64/openmpi/lib --with-Rmpi-type=OPENMPI" --no-test-load 
- (more instruction for Rmpi here: orson2.rz.uni-potsdam.de/shared/examples/R_with_RMPI/readme_sl73.txt
+1. register account on compute server "HPC" (Maximilian Voit Herbst, ZIM)
+2. log on to login1.hpc.uni-potsdam.de, e.g. using Putty
+3. execute 
+		module load lang/R/4.0.4-foss-2020b
+		(or newer version)
+4. Run R and install all required packages like
+	install.ackages(lhs)
+
+5. Check Rmpi is working (see extra instruction in rmpi_start/readme.txt, get this from Till)
 
 5. update WASA executables
 	- replace "wasa_release.exe" by updated Windows executable
-	- replace "wasa.lin" by updated Linux executable (needs to be compiled on the compute server)
+	- replace "wasa.lin" by updated Linux executable (needs to be compiled on the compute server by calling "make all DEBUG=0)
 
 6. adjust WASA-configuration in init_config/
 	- replaced/update climate and geodata input files
 	- adjust do.dat
 
-7. The main workflow of the calibration is as such: 
 
-	job_parallel.pbs [Job to be submitted to the compute server)
+7. Select calibrated parameters
+Select/add the parameters to be calibrated to calibrate_main_dds_mpi.R (near "param_ranges" and "starting.values").
+If the desired parameters are still missing, extend modify_wasa_input.R, so it can modify the desired input files for WASA. 
+Test by calling optim_wrapper.R (see example near #test).
+
+8. The main workflow of the calibration is as such: 
+
+	job.job [Job to be submitted to HPC)
 		calibrate_main_dds_mpi.R (calibration without sediments)
 			optim_pdds() (optimizer, can also be "optim_*_robust" for the parallelized versions)	
 				optim_wrapper.R (this is the function called by the optimizer)
 					runWASAwWarmup.R 
 						modify_wasa_input.R (adjust WASA input files according to desired parameter values)
-						run wasa.exe (actual call of binary)
+						run wasa.exe or wassa.lin (actual call of binary)
 					compute_goodness_measures.R (compute multiple goodness measures, which will all be logged)
 						read_observations()
 						read_wasa_results()					
 					compute_obj_fun.R (compute the objective function based on selected goodness measure(s))	
 				
 		
-The flow should be tested beforehand by calling test_wrapper.R (locally and on orson), which mimics a call to optim_wrapper.R (and below).
+The workflow should be tested beforehand by calling test_wrapper.R (locally and on HPC), which mimics a call to optim_wrapper.R (and below).
 
-8. Extend the calibration towards snow parameters
-Add the parameters to be calibrated to calibrate_main_dds_mpi.R (near "param_ranges" and "starting.values").
-Extend modify_wasa_input.R, so it can modify the desired input files for WASA. 
-Test by calling optim_wrapper.R.
+9. 
+- adjust job.job, if required
+- copy all files to HPC (use SFTP-client, e.g. plugins to Totalcommander, WinSCP, etc.)
 
-9. Copy all files to orson
-- adjust job_parallel.pbs: 
-	- line 2: report eMail
-	- line 3: job name
-	- line 6-7: request number of processors
-	- line 8: maximum job time
-- use SFTP-client (plugins to Totalcommander, WinSCP, etc.)
 9. Start the actual calibration
-- log on to orson using Putty
+- log on to HPC via SSH (e.g. using Putty on Windows)
 - change into copied directory ("cd my_dir")
 - submit job:
-qsub job_parallel.pbs
+sbatch job.job
 
 Submitted jobs can be seen with
-qstat
+squeue
 
 Running jobs have an "R", queued jobs "Q", completed jobs "C".
-The job generates a file joblog-mpi.txt and something *.o*, which may contain error messages.
+The job generates a file joblog-mpi.txt and something slurm*.*, which may contain error messages.
 
 10. Check results
 	After having completed the number of calls specified in calibrate_main_dds_mpi.R, the job terminates.
-	All results are contained in dds.log and dds.pro. They can be visualized with view_progress.R. This script also repeats the best runs found.
+	All results are contained in dds.log and dds.pro. They can be visualized with the command plot_optimization_progress() (or, more sophisticated, with view_progress.R. This script also repeats the best runs found.)
 	
 
 

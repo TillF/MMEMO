@@ -185,7 +185,8 @@ print("check update IC")
     library(ppso)
     gbest = request_object ("globvars$fitness_gbest", verbose_slave=FALSE) #get current 
 
-    if ((length(gbest) > 0) & gbest > return_val) #is this a new optimum for the current particle?
+    if (length(gbest) > 0) 
+    if (gbest > return_val) #is this a new optimum for the current particle?
     {
       print("obj fun improved, try update IC") #dd
 	  #update initial conditions from current run
